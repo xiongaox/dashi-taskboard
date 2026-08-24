@@ -1629,11 +1629,14 @@ export function createTaskboardServer(options = {}) {
                 }
             }
             
+            const cleanEnv = Object.fromEntries(
+                Object.entries(process.env).filter(([k]) => !k.startsWith("ANTIGRAVITY_"))
+            );
+            cleanEnv.ANTIGRAVITY_LS_ADDRESS = lsAddress || "";
+            cleanEnv.ANTIGRAVITY_CSRF_TOKEN = csrfToken || "";
+            
             console.log("[Antigravity] Auto-dispatching in", cwd, "with LS:", lsAddress, "CSRF:", csrfToken, ":", cmd);
-            await promisify(exec)(cmd, { 
-                cwd, 
-                env: { ...process.env, ANTIGRAVITY_LS_ADDRESS: lsAddress || "", ANTIGRAVITY_CSRF_TOKEN: csrfToken || "" } 
-            });
+            await promisify(exec)(cmd, { cwd, env: cleanEnv });
         } catch (e) {
             console.error("[Antigravity] Auto-dispatch failed:", e);
         }
