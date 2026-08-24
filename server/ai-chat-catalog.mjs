@@ -959,7 +959,7 @@ export async function discoverAiCatalog({
       timeout: CATALOG_TIMEOUT_MS,
       maxBuffer: CATALOG_MAX_BUFFER,
       windowsHide: true,
-    }).catch(e => ({ stdout: "[]" })),
+    }).catch(e => ({ stdout: '{"models":[]}' })),
     listSkills(codexExecutable, workspacePath, environment).catch(e => []),
     loadSlashCommands().catch(e => []),
   ]);

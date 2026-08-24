@@ -1350,6 +1350,7 @@ class EventHub {
   }
 
   emit(type, value) {
+    this.emitLocal(type, value);
     const event = {
       type,
       projectId: value.projectId ?? value.project?.id ?? value.task?.projectId,
