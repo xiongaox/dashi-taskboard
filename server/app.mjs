@@ -1611,8 +1611,9 @@ export function createTaskboardServer(options = {}) {
             const project = database.getProject(task.projectId);
             const cwd = project?.workspacePath || process.cwd();
             const prompt = `[$manage-taskboard](~/.gemini/config/skills/manage-taskboard/SKILL.md) 帮我处理议题 ${task.identifier}`;
+            const title = `${task.identifier}: ${task.title}`;
             const agentapi = os.homedir() + "/.gemini/antigravity/bin/agentapi" + (process.platform === "win32" ? ".bat" : "");
-            const cmd = `"${agentapi}" new-conversation "${prompt}"`;
+            const cmd = `"${agentapi}" new-conversation --title="${title.replace(/"/g, '\\"')}" "${prompt}"`;
             
             let lsAddress = process.env.ANTIGRAVITY_LS_ADDRESS;
             let csrfToken = process.env.ANTIGRAVITY_CSRF_TOKEN;
