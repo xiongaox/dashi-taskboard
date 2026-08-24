@@ -1621,22 +1621,6 @@ export function createTaskboardServer(options = {}) {
     }
   });
 
-  events.on("task.moved", async ({ task }) => {
-    if (task.status === "in_progress" && !task.threadId) {
-      try {
-        const { exec } = await import("node:child_process");
-        const { promisify } = await import("node:util");
-        const project = database.getProject(task.projectId);
-        const cwd = project?.workspacePath || process.cwd();
-        const prompt = `[$manage-taskboard](~/.gemini/config/skills/manage-taskboard/SKILL.md) 帮我处理议题 ${task.identifier}`;
-        const cmd = `agentapi new-conversation "${prompt}"`;
-        console.log("[Antigravity] Auto-dispatching in", cwd, ":", cmd);
-        await promisify(exec)(cmd, { cwd });
-      } catch (e) {
-        console.error("[Antigravity] Auto-dispatch failed:", e);
-      }
-    }
-  });
   let clientStorageWrite = Promise.resolve();
 
   async function readClientStorage() {
