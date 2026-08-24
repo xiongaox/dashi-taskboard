@@ -1605,21 +1605,37 @@ export function createTaskboardServer(options = {}) {
 
   events.on("task.moved", async ({ task }) => {
     if (task.status === "in_progress" && !task.threadId) {
-      try {
-        const { exec } = await import("node:child_process");
-        const { promisify } = await import("node:util");
-        const project = database.getProject(task.projectId);
-        const cwd = project?.workspacePath || process.cwd();
-        const prompt = `[$manage-taskboard](~/.gemini/config/skills/manage-taskboard/SKILL.md) 帮我处理议题 ${task.identifier}`;
-        const agentapi = os.homedir() + "/.gemini/antigravity/bin/agentapi" + (process.platform === "win32" ? ".bat" : "");
-        const cmd = `"${agentapi}" new-conversation "${prompt}"`;
-        console.log("[Antigravity] Auto-dispatching in", cwd, ":", cmd);
-        await promisify(exec)(cmd, { cwd });
-      } catch (e) {
-        console.error("[Antigravity] Auto-dispatch failed:", e);
-      }
+        try {
+            const { exec } = await import("node:child_process");
+            const { promisify } = await import("node:util");
+            const project = database.getProject(task.projectId);
+            const cwd = project?.workspacePath || process.cwd();
+            const prompt = `[$manage-taskboard](~/.gemini/config/skills/manage-taskboard/SKILL.md) 帮我处理议题 ${task.identifier}`;
+            const agentapi = os.homedir() + "/.gemini/antigravity/bin/agentapi" + (process.platform === "win32" ? ".bat" : "");
+            const cmd = `"${agentapi}" new-conversation "${prompt}"`;
+            
+            let lsAddress = process.env.ANTIGRAVITY_LS_ADDRESS;
+            if (!lsAddress && process.platform === "win32") {
+                try {
+                    const script = `$proc = Get-CimInstance Win32_Process | Where-Object { $_.Name -match "language_server" } | Select-Object -First 1; $p = $proc.ProcessId; $ports = (netstat -ano | Select-String "LISTENING" | Select-String "\\b$p\\b" | %{ [regex]::Match($_, "127\\.0\\.0\\.1:(\\d+)").Groups[1].Value }); $ports | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum`;
+                    const { stdout } = await promisify(exec)(`powershell -NoProfile -Command "${script}"`);
+                    const port = stdout.trim();
+                    if (port) lsAddress = `localhost:${port}`;
+                } catch (e) {
+                    console.error("Failed to discover LS address", e);
+                }
+            }
+            
+            console.log("[Antigravity] Auto-dispatching in", cwd, "with LS:", lsAddress, ":", cmd);
+            await promisify(exec)(cmd, { 
+                cwd, 
+                env: { ...process.env, ANTIGRAVITY_LS_ADDRESS: lsAddress || "" } 
+            });
+        } catch (e) {
+            console.error("[Antigravity] Auto-dispatch failed:", e);
+        }
     }
-  });
+});
 
   let clientStorageWrite = Promise.resolve();
 
