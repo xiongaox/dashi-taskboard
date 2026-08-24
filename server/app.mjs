@@ -1615,20 +1615,24 @@ export function createTaskboardServer(options = {}) {
             const cmd = `"${agentapi}" new-conversation "${prompt}"`;
             
             let lsAddress = process.env.ANTIGRAVITY_LS_ADDRESS;
-            if (!lsAddress && process.platform === "win32") {
+            let csrfToken = process.env.ANTIGRAVITY_CSRF_TOKEN;
+            if ((!lsAddress || !csrfToken) && process.platform === "win32") {
                 try {
-                    const { stdout } = await promisify(exec)(`powershell -NoProfile -EncodedCommand JABwAHIAbwBjACAAPQAgAEcAZQB0AC0AQwBpAG0ASQBuAHMAdABhAG4AYwBlACAAVwBpAG4AMwAyAF8AUAByAG8AYwBlAHMAcwAgAHwAIABXAGgAZQByAGUALQBPAGIAagBlAGMAdAAgAHsAIAAkAF8ALgBOAGEAbQBlACAALQBtAGEAdABjAGgAIAAnAGwAYQBuAGcAdQBhAGcAZQBfAHMAZQByAHYAZQByACcAIAB9ACAAfAAgAFMAZQBsAGUAYwB0AC0ATwBiAGoAZQBjAHQAIAAtAEYAaQByAHMAdAAgADEAOwAgACQAcAAgAD0AIAAkAHAAcgBvAGMALgBQAHIAbwBjAGUAcwBzAEkAZAA7ACAAJABwAG8AcgB0AHMAIAA9ACAAKABuAGUAdABzAHQAYQB0ACAALQBhAG4AbwAgAHwAIABTAGUAbABlAGMAdAAtAFMAdAByAGkAbgBnACAAJwBMAEkAUwBUAEUATgBJAE4ARwAnACAAfAAgAFMAZQBsAGUAYwB0AC0AUwB0AHIAaQBuAGcAIAAiAFwAYgAkAHAAXABiACIAIAB8ACAAJQB7ACAAWwByAGUAZwBlAHgAXQA6ADoATQBhAHQAYwBoACgAJABfACwAIAAnADEAMgA3AFwALgAwAFwALgAwAFwALgAxADoAKABcAGQAKwApACcAKQAuAEcAcgBvAHUAcABzAFsAMQBdAC4AVgBhAGwAdQBlACAAfQApADsAIAAkAHAAbwByAHQAcwAgAHwAIABNAGUAYQBzAHUAcgBlAC0ATwBiAGoAZQBjAHQAIAAtAE0AYQB4AGkAbQB1AG0AIAB8ACAAUwBlAGwAZQBjAHQALQBPAGIAagBlAGMAdAAgAC0ARQB4AHAAYQBuAGQAUAByAG8AcABlAHIAdAB5ACAATQBhAHgAaQBtAHUAbQA=`);
-                    const port = stdout.trim();
-                    if (port) lsAddress = `localhost:${port}`;
+                    const { stdout } = await promisify(exec)(`powershell -NoProfile -EncodedCommand JABwAHIAbwBjACAAPQAgAEcAZQB0AC0AQwBpAG0ASQBuAHMAdABhAG4AYwBlACAAVwBpAG4AMwAyAF8AUAByAG8AYwBlAHMAcwAgAHwAIABXAGgAZQByAGUALQBPAGIAagBlAGMAdAAgAHsAIAAkAF8ALgBOAGEAbQBlACAALQBtAGEAdABjAGgAIAAnAGwAYQBuAGcAdQBhAGcAZQBfAHMAZQByAHYAZQByACcAIAB9ACAAfAAgAFMAZQBsAGUAYwB0AC0ATwBiAGoAZQBjAHQAIAAtAEYAaQByAHMAdAAgADEAOwAgACQAcAAgAD0AIAAkAHAAcgBvAGMALgBQAHIAbwBjAGUAcwBzAEkAZAA7ACAAJABwAG8AcgB0AHMAIAA9ACAAKABuAGUAdABzAHQAYQB0ACAALQBhAG4AbwAgAHwAIABTAGUAbABlAGMAdAAtAFMAdAByAGkAbgBnACAAJwBMAEkAUwBUAEUATgBJAE4ARwAnACAAfAAgAFMAZQBsAGUAYwB0AC0AUwB0AHIAaQBuAGcAIAAiAFwAYgAkAHAAXABiACIAIAB8ACAAJQB7ACAAWwByAGUAZwBlAHgAXQA6ADoATQBhAHQAYwBoACgAJABfACwAIAAnADEAMgA3AFwALgAwAFwALgAwAFwALgAxADoAKABcAGQAKwApACcAKQAuAEcAcgBvAHUAcABzAFsAMQBdAC4AVgBhAGwAdQBlACAAfQApADsAIAAkAHAAbwByAHQAIAA9ACAAJABwAG8AcgB0AHMAIAB8ACAATQBlAGEAcwB1AHIAZQAtAE8AYgBqAGUAYwB0ACAALQBNAGEAeABpAG0AdQBtACAAfAAgAFMAZQBsAGUAYwB0AC0ATwBiAGoAZQBjAHQAIAAtAEUAeABwAGEAbgBkAFAAcgBvAHAAZQByAHQAeQAgAE0AYQB4AGkAbQB1AG0AOwAgACQAYwBtAGQAIAA9ACAAJABwAHIAbwBjAC4AQwBvAG0AbQBhAG4AZABMAGkAbgBlADsAIAAkAGMAcwByAGYAIAA9ACAAWwByAGUAZwBlAHgAXQA6ADoATQBhAHQAYwBoACgAJABjAG0AZAAsACAAJwAtAC0AYwBzAHIAZgBfAHQAbwBrAGUAbgBcAHMAKwAoAFsAYQAtAHoAQQAtAFoAMAAtADkAXAAtAF0AKwApACcAKQAuAEcAcgBvAHUAcABzAFsAMQBdAC4AVgBhAGwAdQBlADsAIABXAHIAaQB0AGUALQBPAHUAdABwAHUAdAAgACIAJABwAG8AcgB0AHwAJABjAHMAcgBmACIA`);
+                    const parts = stdout.trim().split('|');
+                    if (parts.length === 2) {
+                        lsAddress = `localhost:${parts[0]}`;
+                        csrfToken = parts[1];
+                    }
                 } catch (e) {
-                    console.error("Failed to discover LS address", e);
+                    console.error("Failed to discover LS address and CSRF", e);
                 }
             }
             
-            console.log("[Antigravity] Auto-dispatching in", cwd, "with LS:", lsAddress, ":", cmd);
+            console.log("[Antigravity] Auto-dispatching in", cwd, "with LS:", lsAddress, "CSRF:", csrfToken, ":", cmd);
             await promisify(exec)(cmd, { 
                 cwd, 
-                env: { ...process.env, ANTIGRAVITY_LS_ADDRESS: lsAddress || "" } 
+                env: { ...process.env, ANTIGRAVITY_LS_ADDRESS: lsAddress || "", ANTIGRAVITY_CSRF_TOKEN: csrfToken || "" } 
             });
         } catch (e) {
             console.error("[Antigravity] Auto-dispatch failed:", e);
