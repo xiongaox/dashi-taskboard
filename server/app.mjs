@@ -1616,16 +1616,19 @@ export function createTaskboardServer(options = {}) {
             
             let lsAddress = process.env.ANTIGRAVITY_LS_ADDRESS;
             let csrfToken = process.env.ANTIGRAVITY_CSRF_TOKEN;
-            if ((!lsAddress || !csrfToken) && process.platform === "win32") {
+            let projectId = "";
+            if (process.platform === "win32") {
                 try {
-                    const { stdout } = await promisify(exec)(`powershell -NoProfile -EncodedCommand JABwAHIAbwBjACAAPQAgAEcAZQB0AC0AQwBpAG0ASQBuAHMAdABhAG4AYwBlACAAVwBpAG4AMwAyAF8AUAByAG8AYwBlAHMAcwAgAHwAIABXAGgAZQByAGUALQBPAGIAagBlAGMAdAAgAHsAIAAkAF8ALgBOAGEAbQBlACAALQBtAGEAdABjAGgAIAAnAGwAYQBuAGcAdQBhAGcAZQBfAHMAZQByAHYAZQByACcAIAB9ACAAfAAgAFMAZQBsAGUAYwB0AC0ATwBiAGoAZQBjAHQAIAAtAEYAaQByAHMAdAAgADEAOwAgACQAcAAgAD0AIAAkAHAAcgBvAGMALgBQAHIAbwBjAGUAcwBzAEkAZAA7ACAAJABwAG8AcgB0AHMAIAA9ACAAKABuAGUAdABzAHQAYQB0ACAALQBhAG4AbwAgAHwAIABTAGUAbABlAGMAdAAtAFMAdAByAGkAbgBnACAAJwBMAEkAUwBUAEUATgBJAE4ARwAnACAAfAAgAFMAZQBsAGUAYwB0AC0AUwB0AHIAaQBuAGcAIAAiAFwAYgAkAHAAXABiACIAIAB8ACAAJQB7ACAAWwByAGUAZwBlAHgAXQA6ADoATQBhAHQAYwBoACgAJABfACwAIAAnADEAMgA3AFwALgAwAFwALgAwAFwALgAxADoAKABcAGQAKwApACcAKQAuAEcAcgBvAHUAcABzAFsAMQBdAC4AVgBhAGwAdQBlACAAfQApADsAIAAkAHAAbwByAHQAIAA9ACAAJABwAG8AcgB0AHMAIAB8ACAATQBlAGEAcwB1AHIAZQAtAE8AYgBqAGUAYwB0ACAALQBNAGEAeABpAG0AdQBtACAAfAAgAFMAZQBsAGUAYwB0AC0ATwBiAGoAZQBjAHQAIAAtAEUAeABwAGEAbgBkAFAAcgBvAHAAZQByAHQAeQAgAE0AYQB4AGkAbQB1AG0AOwAgACQAYwBtAGQAIAA9ACAAJABwAHIAbwBjAC4AQwBvAG0AbQBhAG4AZABMAGkAbgBlADsAIAAkAGMAcwByAGYAIAA9ACAAWwByAGUAZwBlAHgAXQA6ADoATQBhAHQAYwBoACgAJABjAG0AZAAsACAAJwAtAC0AYwBzAHIAZgBfAHQAbwBrAGUAbgBcAHMAKwAoAFsAYQAtAHoAQQAtAFoAMAAtADkAXAAtAF0AKwApACcAKQAuAEcAcgBvAHUAcABzAFsAMQBdAC4AVgBhAGwAdQBlADsAIABXAHIAaQB0AGUALQBPAHUAdABwAHUAdAAgACIAJABwAG8AcgB0AHwAJABjAHMAcgBmACIA`);
+                    const discoverScript = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "discover-antigravity.ps1");
+                    const { stdout } = await promisify(exec)(`powershell -NoProfile -ExecutionPolicy Bypass -File "${discoverScript}" -WorkspacePath "${cwd}"`);
                     const parts = stdout.trim().split('|');
-                    if (parts.length === 2) {
-                        lsAddress = `localhost:${parts[0]}`;
-                        csrfToken = parts[1];
+                    if (parts.length >= 2) {
+                        if (!lsAddress) lsAddress = `localhost:${parts[0]}`;
+                        if (!csrfToken) csrfToken = parts[1];
+                        if (parts[2]) projectId = parts[2];
                     }
                 } catch (e) {
-                    console.error("Failed to discover LS address and CSRF", e);
+                    console.error("Failed to discover Antigravity config", e);
                 }
             }
             
@@ -1634,8 +1637,9 @@ export function createTaskboardServer(options = {}) {
             );
             cleanEnv.ANTIGRAVITY_LS_ADDRESS = lsAddress || "";
             cleanEnv.ANTIGRAVITY_CSRF_TOKEN = csrfToken || "";
+            if (projectId) cleanEnv.ANTIGRAVITY_PROJECT_ID = projectId;
             
-            console.log("[Antigravity] Auto-dispatching in", cwd, "with LS:", lsAddress, "CSRF:", csrfToken, ":", cmd);
+            console.log("[Antigravity] Auto-dispatching in", cwd, "with LS:", lsAddress, "CSRF:", csrfToken, "ProjectID:", projectId, ":", cmd);
             await promisify(exec)(cmd, { cwd, env: cleanEnv });
         } catch (e) {
             console.error("[Antigravity] Auto-dispatch failed:", e);
