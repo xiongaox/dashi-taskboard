@@ -1617,8 +1617,7 @@ export function createTaskboardServer(options = {}) {
             let lsAddress = process.env.ANTIGRAVITY_LS_ADDRESS;
             if (!lsAddress && process.platform === "win32") {
                 try {
-                    const script = `$proc = Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'language_server' } | Select-Object -First 1; $p = $proc.ProcessId; $ports = (netstat -ano | Select-String 'LISTENING' | Select-String '\\b$p\\b' | %{ [regex]::Match($_, '127\\.0\\.0\\.1:(\\d+)').Groups[1].Value }); $ports | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum`;
-                    const { stdout } = await promisify(exec)(`powershell -NoProfile -Command "${script}"`);
+                    const { stdout } = await promisify(exec)(`powershell -NoProfile -EncodedCommand JABwAHIAbwBjACAAPQAgAEcAZQB0AC0AQwBpAG0ASQBuAHMAdABhAG4AYwBlACAAVwBpAG4AMwAyAF8AUAByAG8AYwBlAHMAcwAgAHwAIABXAGgAZQByAGUALQBPAGIAagBlAGMAdAAgAHsAIAAkAF8ALgBOAGEAbQBlACAALQBtAGEAdABjAGgAIAAnAGwAYQBuAGcAdQBhAGcAZQBfAHMAZQByAHYAZQByACcAIAB9ACAAfAAgAFMAZQBsAGUAYwB0AC0ATwBiAGoAZQBjAHQAIAAtAEYAaQByAHMAdAAgADEAOwAgACQAcAAgAD0AIAAkAHAAcgBvAGMALgBQAHIAbwBjAGUAcwBzAEkAZAA7ACAAJABwAG8AcgB0AHMAIAA9ACAAKABuAGUAdABzAHQAYQB0ACAALQBhAG4AbwAgAHwAIABTAGUAbABlAGMAdAAtAFMAdAByAGkAbgBnACAAJwBMAEkAUwBUAEUATgBJAE4ARwAnACAAfAAgAFMAZQBsAGUAYwB0AC0AUwB0AHIAaQBuAGcAIAAiAFwAYgAkAHAAXABiACIAIAB8ACAAJQB7ACAAWwByAGUAZwBlAHgAXQA6ADoATQBhAHQAYwBoACgAJABfACwAIAAnADEAMgA3AFwALgAwAFwALgAwAFwALgAxADoAKABcAGQAKwApACcAKQAuAEcAcgBvAHUAcABzAFsAMQBdAC4AVgBhAGwAdQBlACAAfQApADsAIAAkAHAAbwByAHQAcwAgAHwAIABNAGUAYQBzAHUAcgBlAC0ATwBiAGoAZQBjAHQAIAAtAE0AYQB4AGkAbQB1AG0AIAB8ACAAUwBlAGwAZQBjAHQALQBPAGIAagBlAGMAdAAgAC0ARQB4AHAAYQBuAGQAUAByAG8AcABlAHIAdAB5ACAATQBhAHgAaQBtAHUAbQA=`);
                     const port = stdout.trim();
                     if (port) lsAddress = `localhost:${port}`;
                 } catch (e) {
