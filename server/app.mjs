@@ -1617,7 +1617,7 @@ export function createTaskboardServer(options = {}) {
             let lsAddress = process.env.ANTIGRAVITY_LS_ADDRESS;
             if (!lsAddress && process.platform === "win32") {
                 try {
-                    const script = `$proc = Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'language_server' } | Select-Object -First 1; $p = $proc.ProcessId; $ports = (netstat -ano | Select-String 'LISTENING' | Select-String '\b$p\b' | %{ [regex]::Match($_, '127\.0\.0\.1:(\d+)').Groups[1].Value }); $ports | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum`;
+                    const script = `$proc = Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'language_server' } | Select-Object -First 1; $p = $proc.ProcessId; $ports = (netstat -ano | Select-String 'LISTENING' | Select-String '\\b$p\\b' | %{ [regex]::Match($_, '127\\.0\\.0\\.1:(\\d+)').Groups[1].Value }); $ports | Measure-Object -Maximum | Select-Object -ExpandProperty Maximum`;
                     const { stdout } = await promisify(exec)(`powershell -NoProfile -Command "${script}"`);
                     const port = stdout.trim();
                     if (port) lsAddress = `localhost:${port}`;
