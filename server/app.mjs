@@ -1319,12 +1319,24 @@ function parseComposerTurn(body) {
 class EventHub {
   constructor() {
     this.clients = new Set();
+    this.listeners = new Map();
     this.keepAlive = setInterval(() => {
       for (const response of this.clients) response.write(": keep-alive\n\n");
     }, 20_000);
     this.keepAlive.unref();
   }
 
+  on(event, callback) {
+    if (!this.listeners.has(event)) this.listeners.set(event, new Set());
+    this.listeners.get(event).add(callback);
+  }
+  emitLocal(event, payload) {
+    if (this.listeners.has(event)) {
+      for (const callback of this.listeners.get(event)) {
+        try { callback(payload); } catch (e) { console.error(e); }
+      }
+    }
+  }
   connect(request, response) {
     response.writeHead(200, {
       connection: "keep-alive",
@@ -1589,6 +1601,40 @@ export function createTaskboardServer(options = {}) {
   const routePrefix = resolved.instanceToken ? `/${resolved.instanceToken}` : "";
   const database = new TaskboardDatabase(resolved.databasePath);
   const events = new EventHub();
+
+  events.on("task.moved", async ({ task }) => {
+    if (task.status === "in_progress" && !task.threadId) {
+      try {
+        const { exec } = await import("node:child_process");
+        const { promisify } = await import("node:util");
+        const project = database.getProject(task.projectId);
+        const cwd = project?.workspacePath || process.cwd();
+        const prompt = `[$manage-taskboard](~/.gemini/config/skills/manage-taskboard/SKILL.md) 帮我处理议题 ${task.identifier}`;
+        const cmd = `agentapi new-conversation "${prompt}"`;
+        console.log("[Antigravity] Auto-dispatching in", cwd, ":", cmd);
+        await promisify(exec)(cmd, { cwd });
+      } catch (e) {
+        console.error("[Antigravity] Auto-dispatch failed:", e);
+      }
+    }
+  });
+
+  events.on("task.moved", async ({ task }) => {
+    if (task.status === "in_progress" && !task.threadId) {
+      try {
+        const { exec } = await import("node:child_process");
+        const { promisify } = await import("node:util");
+        const project = database.getProject(task.projectId);
+        const cwd = project?.workspacePath || process.cwd();
+        const prompt = `[$manage-taskboard](~/.gemini/config/skills/manage-taskboard/SKILL.md) 帮我处理议题 ${task.identifier}`;
+        const cmd = `agentapi new-conversation "${prompt}"`;
+        console.log("[Antigravity] Auto-dispatching in", cwd, ":", cmd);
+        await promisify(exec)(cmd, { cwd });
+      } catch (e) {
+        console.error("[Antigravity] Auto-dispatch failed:", e);
+      }
+    }
+  });
   let clientStorageWrite = Promise.resolve();
 
   async function readClientStorage() {
