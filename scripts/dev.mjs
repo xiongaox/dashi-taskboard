@@ -6,6 +6,7 @@ const children = [
   }),
   spawn(process.platform === "win32" ? "npm.cmd" : "npm", ["run", "dev:web"], {
     stdio: "inherit",
+    shell: process.platform === "win32"
   }),
 ];
 
