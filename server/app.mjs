@@ -1610,7 +1610,8 @@ export function createTaskboardServer(options = {}) {
         const project = database.getProject(task.projectId);
         const cwd = project?.workspacePath || process.cwd();
         const prompt = `[$manage-taskboard](~/.gemini/config/skills/manage-taskboard/SKILL.md) 帮我处理议题 ${task.identifier}`;
-        const cmd = `agentapi new-conversation "${prompt}"`;
+        const agentapi = os.homedir() + "/.gemini/antigravity/bin/agentapi" + (process.platform === "win32" ? ".bat" : "");
+        const cmd = `"${agentapi}" new-conversation "${prompt}"`;
         console.log("[Antigravity] Auto-dispatching in", cwd, ":", cmd);
         await promisify(exec)(cmd, { cwd });
       } catch (e) {
