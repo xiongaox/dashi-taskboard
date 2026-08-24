@@ -959,9 +959,9 @@ export async function discoverAiCatalog({
       timeout: CATALOG_TIMEOUT_MS,
       maxBuffer: CATALOG_MAX_BUFFER,
       windowsHide: true,
-    }),
-    listSkills(codexExecutable, workspacePath, environment),
-    loadSlashCommands(),
+    }).catch(e => ({ stdout: "[]" })),
+    listSkills(codexExecutable, workspacePath, environment).catch(e => []),
+    loadSlashCommands().catch(e => []),
   ]);
   const modelCatalog = JSON.parse(modelResult.stdout);
   return {
