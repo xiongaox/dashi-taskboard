@@ -247,16 +247,14 @@ async function copyApplicationResources() {
   );
 
   await mkdir(path.join(appResources, "scripts"), { recursive: true });
-  for (const fileName of [
-    "codex-cdp-pipe.mjs",
-    "codex-injector.mjs",
-    "codex-injector-runtime.mjs",
-    "codex-rate-limits.mjs",
+  const scriptsFiles = [
+    "antigravity-injector.mjs",
     "taskboard-supervisor.mjs",
-  ]) {
+  ];
+  for (const file of scriptsFiles) {
     await copyFile(
-      path.join(projectRoot, "scripts", fileName),
-      path.join(appResources, "scripts", fileName),
+      path.join(projectRoot, "scripts", file),
+      path.join(appResources, "scripts", file),
     );
   }
   await mkdir(path.join(appResources, "inject"), { recursive: true });

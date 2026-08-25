@@ -64,10 +64,10 @@ async function verifyPackageRoot(root, label) {
     "app/dist/web/index.html",
     "app/inject/antigravity-taskboard.user.js",
     "app/node_modules/smol-toml/package.json",
-    "app/scripts/codex-injector.mjs",
+    "app/scripts/antigravity-injector.mjs",
     "app/server/app.mjs",
     "app/server/index.mjs",
-    "app/shared/codex-executable.mjs",
+    "app/shared/taskboard-automation.mjs",
     "app/skills/manage-taskboard/SKILL.md",
   ];
 
