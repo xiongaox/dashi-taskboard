@@ -75,16 +75,16 @@ jobs:
           mkdir -p "$LINUX_RELEASE"
           cp \
             src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb \
-            "$LINUX_RELEASE/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb"
+            "$LINUX_RELEASE/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb"
           cp \
             src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb.sig \
-            "$LINUX_RELEASE/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb.sig"
+            "$LINUX_RELEASE/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb.sig"
           cp \
             src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/appimage/*.AppImage \
-            "$LINUX_RELEASE/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage"
+            "$LINUX_RELEASE/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage"
           cp \
             src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/appimage/*.AppImage.sig \
-            "$LINUX_RELEASE/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage.sig"
+            "$LINUX_RELEASE/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage.sig"
 
       - name: Preserve Ubuntu 24.04 x64 release assets
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -256,7 +256,7 @@ jobs:
         run: |
           umask 077
           CERTIFICATE_PATH="$RUNNER_TEMP/developer-id.p12"
-          KEYCHAIN_PATH="$RUNNER_TEMP/codex-taskboard-signing.keychain-db"
+          KEYCHAIN_PATH="$RUNNER_TEMP/antigravity-taskboard-signing.keychain-db"
 
           printf '%s' "$APPLE_CERTIFICATE" | base64 --decode > "$CERTIFICATE_PATH"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
@@ -295,15 +295,15 @@ jobs:
       - name: Sign App with separate Node.js policy
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-        run: node scripts/sign-macos-app.mjs "src-tauri/target/universal-apple-darwin/release/bundle/macos/Codex Taskboard.app"
+        run: node scripts/sign-macos-app.mjs "src-tauri/target/universal-apple-darwin/release/bundle/macos/Antigravity Taskboard.app"
 
       - name: Notarize and staple App
         env:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
         run: |
-          APP_PATH="src-tauri/target/universal-apple-darwin/release/bundle/macos/Codex Taskboard.app"
-          APP_ZIP="$RUNNER_TEMP/Codex.Taskboard.app.zip"
+          APP_PATH="src-tauri/target/universal-apple-darwin/release/bundle/macos/Antigravity Taskboard.app"
+          APP_ZIP="$RUNNER_TEMP/Antigravity.Taskboard.app.zip"
           /usr/bin/ditto -c -k --keepParent --sequesterRsrc "$APP_PATH" "$APP_ZIP"
           xcrun notarytool submit "$APP_ZIP" \
             --key-id "$APPLE_API_KEY" \
@@ -322,14 +322,14 @@ jobs:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
         run: |
           BUNDLE_ROOT="src-tauri/target/universal-apple-darwin/release/bundle"
-          APP_NAME="Codex Taskboard.app"
-          RAW_DMG_NAME="Codex Taskboard_${PACKAGE_VERSION}_universal.dmg"
-          RELEASE_DMG_NAME="Codex.Taskboard_${PACKAGE_VERSION}_universal.dmg"
+          APP_NAME="Antigravity Taskboard.app"
+          RAW_DMG_NAME="Antigravity Taskboard_${PACKAGE_VERSION}_universal.dmg"
+          RELEASE_DMG_NAME="Antigravity.Taskboard_${PACKAGE_VERSION}_universal.dmg"
           rm -f "$BUNDLE_ROOT/dmg/$RAW_DMG_NAME" "$BUNDLE_ROOT/macos/$RAW_DMG_NAME"
           (
             cd "$BUNDLE_ROOT/macos"
             ../dmg/bundle_dmg.sh \
-              --volname "Codex Taskboard" \
+              --volname "Antigravity Taskboard" \
               --icon "$APP_NAME" 180 170 \
               --app-drop-link 480 170 \
               --window-size 660 400 \
@@ -358,7 +358,7 @@ jobs:
         run: |
           BUNDLE_ROOT="src-tauri/target/universal-apple-darwin/release/bundle"
           node scripts/create-macos-updater.mjs \
-            "$BUNDLE_ROOT/macos/Codex Taskboard.app" \
+            "$BUNDLE_ROOT/macos/Antigravity Taskboard.app" \
             "$BUNDLE_ROOT/release" \
             "$RELEASE_TAG"
 
@@ -366,8 +366,8 @@ jobs:
         run: |
           set -euo pipefail
           BUNDLE_ROOT="src-tauri/target/universal-apple-darwin/release/bundle"
-          APP_PATH="$BUNDLE_ROOT/macos/Codex Taskboard.app"
-          DMG_PATH="$BUNDLE_ROOT/dmg/Codex.Taskboard_${PACKAGE_VERSION}_universal.dmg"
+          APP_PATH="$BUNDLE_ROOT/macos/Antigravity Taskboard.app"
+          DMG_PATH="$BUNDLE_ROOT/dmg/Antigravity.Taskboard_${PACKAGE_VERSION}_universal.dmg"
           RELEASE_ROOT="$BUNDLE_ROOT/release"
           npm run app:verify-release -- "$APP_PATH" "$DMG_PATH" "$RELEASE_ROOT" "$RELEASE_TAG"
 
@@ -387,8 +387,8 @@ jobs:
         run: |
           BUNDLE_ROOT="src-tauri/target/universal-apple-darwin/release/bundle"
           LATEST_PATH="$BUNDLE_ROOT/release/latest.json"
-          LINUX_DEB_NAME="Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb"
-          LINUX_APPIMAGE_NAME="Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage"
+          LINUX_DEB_NAME="Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb"
+          LINUX_APPIMAGE_NAME="Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage"
           LINUX_DEB="$RUNNER_TEMP/linux-release/$LINUX_DEB_NAME"
           LINUX_APPIMAGE="$RUNNER_TEMP/linux-release/$LINUX_APPIMAGE_NAME"
           jq \
@@ -414,37 +414,37 @@ jobs:
           MANIFEST_ROOT="$RUNNER_TEMP/release-manifest"
           mkdir -p "$RELEASE_ASSETS" "$MANIFEST_ROOT"
           cp \
-            "$BUNDLE_ROOT/dmg/Codex.Taskboard_${PACKAGE_VERSION}_universal.dmg" \
-            "$RELEASE_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_macOS-universal.dmg"
-          cp "$BUNDLE_ROOT/release/Codex.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz" "$RELEASE_ASSETS/"
-          cp "$BUNDLE_ROOT/release/Codex.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz.sig" "$RELEASE_ASSETS/"
+            "$BUNDLE_ROOT/dmg/Antigravity.Taskboard_${PACKAGE_VERSION}_universal.dmg" \
+            "$RELEASE_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_macOS-universal.dmg"
+          cp "$BUNDLE_ROOT/release/Antigravity.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz" "$RELEASE_ASSETS/"
+          cp "$BUNDLE_ROOT/release/Antigravity.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz.sig" "$RELEASE_ASSETS/"
           cp "$BUNDLE_ROOT/release/latest.json" "$RELEASE_ASSETS/"
           cp \
-            "$RUNNER_TEMP/windows-preview/Codex Taskboard_${PACKAGE_VERSION}_x64-setup.exe" \
-            "$RELEASE_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_NSIS-x64-unsigned.exe"
+            "$RUNNER_TEMP/windows-preview/Antigravity Taskboard_${PACKAGE_VERSION}_x64-setup.exe" \
+            "$RELEASE_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_NSIS-x64-unsigned.exe"
           cp \
-            "$RUNNER_TEMP/linux-release/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb" \
+            "$RUNNER_TEMP/linux-release/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb" \
             "$RELEASE_ASSETS/"
           cp \
-            "$RUNNER_TEMP/linux-release/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb.sig" \
+            "$RUNNER_TEMP/linux-release/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb.sig" \
             "$RELEASE_ASSETS/"
           cp \
-            "$RUNNER_TEMP/linux-release/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage" \
+            "$RUNNER_TEMP/linux-release/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage" \
             "$RELEASE_ASSETS/"
           cp \
-            "$RUNNER_TEMP/linux-release/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage.sig" \
+            "$RUNNER_TEMP/linux-release/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage.sig" \
             "$RELEASE_ASSETS/"
           (
             cd "$RELEASE_ASSETS"
             shasum -a 256 \
-              "Codex.Taskboard_${PACKAGE_VERSION}_macOS-universal.dmg" \
-              "Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb" \
-              "Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb.sig" \
-              "Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage" \
-              "Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage.sig" \
-              "Codex.Taskboard_${PACKAGE_VERSION}_NSIS-x64-unsigned.exe" \
-              "Codex.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz" \
-              "Codex.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz.sig" \
+              "Antigravity.Taskboard_${PACKAGE_VERSION}_macOS-universal.dmg" \
+              "Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb" \
+              "Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb.sig" \
+              "Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage" \
+              "Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage.sig" \
+              "Antigravity.Taskboard_${PACKAGE_VERSION}_NSIS-x64-unsigned.exe" \
+              "Antigravity.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz" \
+              "Antigravity.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz.sig" \
               "latest.json" > "$MANIFEST_ROOT/release-assets.sha256"
           )
 
@@ -466,30 +466,30 @@ jobs:
             --verify-tag \
             --target "$GITHUB_SHA" \
             --draft \
-            --title "Codex Taskboard $RELEASE_TAG" \
+            --title "Antigravity Taskboard $RELEASE_TAG" \
             --generate-notes \
-            "$RELEASE_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_macOS-universal.dmg"
+            "$RELEASE_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_macOS-universal.dmg"
           gh release upload "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            "$RELEASE_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb"
+            "$RELEASE_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb"
           gh release upload "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            "$RELEASE_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb.sig"
+            "$RELEASE_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb.sig"
           gh release upload "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            "$RELEASE_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage"
+            "$RELEASE_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage"
           gh release upload "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            "$RELEASE_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage.sig"
+            "$RELEASE_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage.sig"
           gh release upload "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            "$RELEASE_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_NSIS-x64-unsigned.exe"
+            "$RELEASE_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_NSIS-x64-unsigned.exe"
           gh release upload "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            "$RELEASE_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz"
+            "$RELEASE_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz"
           gh release upload "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
-            "$RELEASE_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz.sig"
+            "$RELEASE_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz.sig"
           gh release upload "$RELEASE_TAG" \
             --repo "$GITHUB_REPOSITORY" \
             "$RELEASE_ASSETS/latest.json"
@@ -497,7 +497,7 @@ jobs:
       - name: Remove temporary signing files
         if: always()
         run: |
-          security delete-keychain "$RUNNER_TEMP/codex-taskboard-signing.keychain-db" 2>/dev/null || true
+          security delete-keychain "$RUNNER_TEMP/antigravity-taskboard-signing.keychain-db" 2>/dev/null || true
           rm -f "$RUNNER_TEMP/developer-id.p12"
           rm -f "$RUNNER_TEMP/app-store-connect.p8"
 
@@ -656,24 +656,24 @@ jobs:
           UPDATER_ROOT="$RUNNER_TEMP/remote-updater"
           mkdir -p "$UPDATER_ROOT"
           tar -xzf \
-            "$DRAFT_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz" \
+            "$DRAFT_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz" \
             -C "$UPDATER_ROOT"
           MACOS_RELEASE_ROOT="$RUNNER_TEMP/remote-macos-release"
           mkdir -p "$MACOS_RELEASE_ROOT"
           cp \
-            "$DRAFT_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz" \
-            "$DRAFT_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz.sig" \
+            "$DRAFT_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz" \
+            "$DRAFT_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_universal.app.tar.gz.sig" \
             "$MACOS_RELEASE_ROOT/"
           jq 'del(.platforms["linux-x86_64-deb"], .platforms["linux-x86_64-appimage"])' \
             "$DRAFT_ASSETS/latest.json" > "$MACOS_RELEASE_ROOT/latest.json"
           npm run app:verify-release -- \
-            "$UPDATER_ROOT/Codex Taskboard.app" \
-            "$DRAFT_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_macOS-universal.dmg" \
+            "$UPDATER_ROOT/Antigravity Taskboard.app" \
+            "$DRAFT_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_macOS-universal.dmg" \
             "$MACOS_RELEASE_ROOT" \
             "$RELEASE_TAG"
           node scripts/verify-linux-updater.mjs \
-            "$DRAFT_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb" \
-            "$DRAFT_ASSETS/Codex.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage" \
+            "$DRAFT_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.deb" \
+            "$DRAFT_ASSETS/Antigravity.Taskboard_${PACKAGE_VERSION}_Ubuntu-24.04-x64.AppImage" \
             "$DRAFT_ASSETS/latest.json" \
             "$RELEASE_TAG"
 

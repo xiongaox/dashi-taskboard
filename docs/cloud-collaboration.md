@@ -1,6 +1,6 @@
 # Cloud collaboration
 
-Codex Taskboard can run as a small shared Cloudflare deployment for two trusted collaborators:
+Antigravity Taskboard can run as a small shared Cloudflare deployment for two trusted collaborators:
 
 - one Worker serves the built UI and the JSON API;
 - D1 is the authoritative business database;
@@ -14,8 +14,8 @@ The production resource names are:
 | Resource | Name |
 | --- | --- |
 | Worker | `board` |
-| D1 database | `codex-taskboard-db` |
-| R2 bucket | `codex-taskboard-attachments` |
+| D1 database | `antigravity-taskboard-db` |
+| R2 bucket | `antigravity-taskboard-attachments` |
 | Durable Object class | `RealtimeHub` |
 
 This is intentionally a shared-password trust model. The Basic username is only the actor name displayed in task and comment attribution, not a verified identity. Anyone who knows the shared password has full read and write access and can choose any actor name. Use it only with the other trusted collaborator.
@@ -60,8 +60,8 @@ npx wrangler whoami
 Provision the production D1 database and private R2 bucket using the exact names above.
 
 ```bash
-npx wrangler d1 create codex-taskboard-db
-npx wrangler r2 bucket create codex-taskboard-attachments
+npx wrangler d1 create antigravity-taskboard-db
+npx wrangler r2 bucket create antigravity-taskboard-attachments
 ```
 
 `wrangler.jsonc` contains one production configuration and identifies the D1 binding by its resource name and `database_id`. A D1 database ID is public metadata and does not grant access, so it can be committed. Wrangler local development creates persistent local equivalents under `.wrangler/`; those are local simulations, not additional Cloudflare environments.

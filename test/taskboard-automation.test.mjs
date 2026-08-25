@@ -203,7 +203,7 @@ test("the remote automation prompt keeps taskctl local and delegates work to the
 
 test("the generated automation command uses an argv runtime file instead of an env assignment", () => {
   const previous = process.env.CODEX_TASKBOARD_RUNTIME_FILE;
-  process.env.CODEX_TASKBOARD_RUNTIME_FILE = "/Users/example/Library/Application Support/Codex Taskboard/launcher-runtime.json";
+  process.env.CODEX_TASKBOARD_RUNTIME_FILE = "/Users/example/Library/Application Support/Antigravity Taskboard/launcher-runtime.json";
   try {
     const prompt = buildTaskboardAutomationPrompt(baseRequest);
     const cliPath = path.resolve(path.dirname(baseRequest.skillPath), "../..", "cli/taskctl.mjs");

@@ -342,7 +342,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "codex-taskboard-launcher"
+name = "antigravity-taskboard-launcher"
 version = "1.1.6"
 dependencies = [
  "base64 0.22.1",

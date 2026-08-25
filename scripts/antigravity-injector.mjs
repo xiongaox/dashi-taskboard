@@ -35,12 +35,12 @@ const defaultCodexDebuggingPort = 9229;
 const independentCodexProfilePath = process.env.CODEX_TASKBOARD_CODEX_PROFILE
   ? path.resolve(process.env.CODEX_TASKBOARD_CODEX_PROFILE)
   : process.platform === "linux"
-    ? path.join(os.tmpdir(), "codex-taskboard-independent-profile-v2")
-    : "/private/tmp/codex-taskboard-independent-profile-v2";
+    ? path.join(os.tmpdir(), "antigravity-taskboard-independent-profile-v2")
+    : "/private/tmp/antigravity-taskboard-independent-profile-v2";
 const sourceCodexProfilePath = process.env.CODEX_TASKBOARD_CODEX_SOURCE_PROFILE
   ? path.resolve(process.env.CODEX_TASKBOARD_CODEX_SOURCE_PROFILE)
   : null;
-const injectionPath = path.join(projectRoot, "inject", "codex-taskboard.user.js");
+const injectionPath = path.join(projectRoot, "inject", "antigravity-taskboard.user.js");
 const taskboardDataDirectory = process.env.CODEX_TASKBOARD_DATA_DIR
   ? path.resolve(process.env.CODEX_TASKBOARD_DATA_DIR)
   : path.join(projectRoot, ".data");
@@ -174,7 +174,7 @@ async function isTaskboardReachable() { return true;
   const challenge = randomBytes(32).toString("hex");
   try {
     const response = await fetch(taskboardHealthUrl, {
-      headers: { "x-codex-taskboard-challenge": challenge },
+      headers: { "x-antigravity-taskboard-challenge": challenge },
       signal: AbortSignal.timeout(1_500),
     });
     if (!response.ok) return false;
@@ -183,7 +183,7 @@ async function isTaskboardReachable() { return true;
       .update(challenge)
       .digest("hex");
     return body?.status === "ok"
-      && body.product === "codex-taskboard"
+      && body.product === "antigravity-taskboard"
       && body.version === taskboardVersion
       && body.proof === proof;
   } catch {
@@ -255,7 +255,7 @@ async function importCodexBrowserProfile() {
   if (!sourceCodexProfilePath || sourceCodexProfilePath === independentCodexProfilePath) return;
   const markerPath = path.join(
     independentCodexProfilePath,
-    ".codex-taskboard-browser-profile-imported-v1",
+    ".antigravity-taskboard-browser-profile-imported-v1",
   );
   try {
     await stat(markerPath);
@@ -736,7 +736,7 @@ async function waitForResidentInjectorReady(port, pid, startupToken, expectedSou
           const readiness = await cdp.send("Runtime.evaluate", {
             expression: `({
               token: window[${JSON.stringify(hostStartupTokenName)}],
-              taskboardEntryMounted: Boolean(document.getElementById("codex-taskboard-entry")),
+              taskboardEntryMounted: Boolean(document.getElementById("antigravity-taskboard-entry")),
               sourceHash: window.__codexTaskboardInjection__?.sourceHash || null
             })`,
             returnByValue: true,
@@ -786,7 +786,7 @@ async function refreshTaskboardFrames(port) {
           if (typeof taskboard?.reloadFrame === "function") {
             return { refreshed: taskboard.reloadFrame(), via: "injection" };
           }
-          const frame = document.getElementById("codex-taskboard-frame");
+          const frame = document.getElementById("antigravity-taskboard-frame");
           if (!frame) return { refreshed: false, via: "not-mounted" };
           const url = new URL(frame.getAttribute("src") || frame.src);
           url.searchParams.set("__codex_taskboard_refresh", Date.now().toString(36));
@@ -852,11 +852,11 @@ async function verifiedTaskboardDocument(frameCapability) {
     cache: "no-store",
     headers: {
       origin: "app://-",
-      "x-codex-taskboard-challenge": challenge,
+      "x-antigravity-taskboard-challenge": challenge,
     },
   });
   if (!response.ok) throw new Error(`Taskboard HTTP ${response.status}`);
-  const proof = response.headers.get("x-codex-taskboard-proof") ?? "";
+  const proof = response.headers.get("x-antigravity-taskboard-proof") ?? "";
   const expectedProof = createHmac("sha256", taskboardInstanceSecret)
     .update(challenge)
     .digest("hex");
@@ -1699,7 +1699,7 @@ function installTaskboardHostBinding(cdp, supervisor, startupToken) {
       const { frameTree } = await cdp.send("Page.getFrameTree");
       const isolatedWorld = await cdp.send("Page.createIsolatedWorld", {
         frameId: frameTree.frame.id,
-        worldName: "codex-taskboard-host",
+        worldName: "antigravity-taskboard-host",
       });
       activeContextId = isolatedWorld.executionContextId;
       await cdp.send("Runtime.addBinding", {
@@ -1775,11 +1775,11 @@ async function readInjectionStatus(cdp) {
       version: window.__codexTaskboardInjection__?.version || null,
       sourceHash: window.__codexTaskboardInjection__?.sourceHash || null,
       scriptIdentifier: window[${JSON.stringify(injectionScriptIdentifierName)}] || null,
-      entryMounted: Boolean(document.getElementById("codex-taskboard-entry")),
-      pageMounted: Boolean(document.getElementById("codex-taskboard-page")),
-      pageVisible: document.getElementById("codex-taskboard-page")?.hidden === false,
+      entryMounted: Boolean(document.getElementById("antigravity-taskboard-entry")),
+      pageMounted: Boolean(document.getElementById("antigravity-taskboard-page")),
+      pageVisible: document.getElementById("antigravity-taskboard-page")?.hidden === false,
       frameReady: window.__codexTaskboardInjection__?.ready === true,
-      frameUrl: document.getElementById("codex-taskboard-frame")?.src || null
+      frameUrl: document.getElementById("antigravity-taskboard-frame")?.src || null
     })`,
     returnByValue: true,
   });
@@ -1825,7 +1825,7 @@ async function publishInjectionScriptIdentifier(cdp, scriptIdentifier) {
 
 async function registerInjectionSource(cdp, source) {
   const registration = await cdp.send("Page.addScriptToEvaluateOnNewDocument", {
-    source: `${source}\n//# sourceURL=codex-taskboard.user.js`,
+    source: `${source}\n//# sourceURL=antigravity-taskboard.user.js`,
   });
   return registration.identifier;
 }
@@ -2419,7 +2419,7 @@ async function main() {
           nativeCodexBrowser = false;
           idleAfterNormalExit = true;
           console.error(
-            "Waiting for Codex after exit; open Codex Taskboard again to restart it.",
+            "Waiting for Codex after exit; open Antigravity Taskboard again to restart it.",
           );
           continue;
         }
@@ -2483,7 +2483,7 @@ async function main() {
             codexProcess = null;
             idleAfterNormalExit = true;
             console.error(
-              "Waiting for Codex after normal exit; open Codex Taskboard again to restart it.",
+              "Waiting for Codex after normal exit; open Antigravity Taskboard again to restart it.",
             );
             continue;
           }
@@ -2513,7 +2513,7 @@ async function main() {
             if (exitCode === 0) {
               idleAfterNormalExit = true;
               console.error(
-                "Waiting for Codex after normal exit; open Codex Taskboard again to restart it.",
+                "Waiting for Codex after normal exit; open Antigravity Taskboard again to restart it.",
               );
               continue;
             }
@@ -2530,7 +2530,7 @@ async function main() {
           codexAppPid = null;
           idleAfterNormalExit = true;
           console.error(
-            "Waiting for Codex after exit; open Codex Taskboard again to restart it.",
+            "Waiting for Codex after exit; open Antigravity Taskboard again to restart it.",
           );
           continue;
         }

@@ -14,7 +14,7 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "codex-taskboard-db",
+      "database_name": "antigravity-taskboard-db",
       "database_id": "d711c6fb-2d82-4a50-baf1-289db5d54abf",
       "migrations_dir": "cloud/migrations"
     }
@@ -22,7 +22,7 @@
   "r2_buckets": [
     {
       "binding": "ATTACHMENTS",
-      "bucket_name": "codex-taskboard-attachments"
+      "bucket_name": "antigravity-taskboard-attachments"
     }
   ],
   "durable_objects": {

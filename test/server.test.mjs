@@ -20,7 +20,7 @@ afterEach(async () => {
 });
 
 async function startServer(configure, listenOptions = {}) {
-  const directory = await mkdtemp(path.join(os.tmpdir(), "codex-taskboard-test-"));
+  const directory = await mkdtemp(path.join(os.tmpdir(), "antigravity-taskboard-test-"));
   const options = configure ? await configure(directory) : {};
   const app = createTaskboardServer({ dataDirectory: directory, ...options });
   const address = await app.listen({ port: 0, ...listenOptions });
@@ -101,10 +101,10 @@ test("launcher mode proves service identity and hides every route behind its ins
   assert.equal(unauthenticatedHealth.response.status, 401);
 
   const health = await request(baseUrl, "/health", {
-    headers: { "x-codex-taskboard-challenge": challenge },
+    headers: { "x-antigravity-taskboard-challenge": challenge },
   });
   assert.equal(health.response.status, 200);
-  assert.equal(health.body.product, "codex-taskboard");
+  assert.equal(health.body.product, "antigravity-taskboard");
   assert.equal(health.body.version, version);
   assert.equal(
     health.body.proof,

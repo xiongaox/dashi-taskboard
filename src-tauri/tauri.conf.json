@@ -10,7 +10,7 @@
     "active": true,
     "targets": ["app", "dmg"],
     "category": "Productivity",
-    "shortDescription": "在 Codex 客户端中打开本地任务面板",
+    "shortDescription": "在 Antigravity 客户端中打开本地任务面板",
     "createUpdaterArtifacts": true,
     "externalBin": ["binaries/node"],
     "resources": {
@@ -27,7 +27,7 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDIzOTE3QTI2OTdFNUNDOUQKUldTZHpPV1hKbnFSSStlc3dBblBhVzEydlRGR29seE5EeDhyUFR4NUZDT29kSHQ3MTFES2xuK0IK",
       "endpoints": [
-        "https://github.com/xiongaox/dashi-taskboard/releases/latest/download/latest.json"
+        "https://github.com/chuspeeism/dashi-taskboard/releases/latest/download/latest.json"
       ]
     }
   }

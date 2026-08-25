@@ -7,7 +7,7 @@ const detailSource = await readFile(new URL("../web/src/components/TaskDetail.ts
 const avatarSource = await readFile(new URL("../web/src/components/ActorAvatar.tsx", import.meta.url), "utf8");
 const apiSource = await readFile(new URL("../web/src/api.ts", import.meta.url), "utf8");
 const appSource = await readFile(new URL("../web/src/App.tsx", import.meta.url), "utf8");
-const injectSource = await readFile(new URL("../inject/codex-taskboard.user.js", import.meta.url), "utf8");
+const injectSource = await readFile(new URL("../inject/antigravity-taskboard.user.js", import.meta.url), "utf8");
 const styles = await readFile(new URL("../web/src/styles.css", import.meta.url), "utf8");
 
 test("task and comment contracts expose persisted user or agent identities", () => {

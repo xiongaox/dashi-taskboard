@@ -1,19 +1,19 @@
 # Privacy
 
-Codex Taskboard is a local-first application. Its desktop launcher runs the
+Antigravity Taskboard is a local-first application. Its desktop launcher runs the
 Taskboard service on the local computer and does not send Taskboard content or
 usage telemetry to the project maintainers.
 
 ## Data stored on the computer
 
-On Windows, Codex Taskboard stores its database, attachments, launcher runtime
+On Windows, Antigravity Taskboard stores its database, attachments, launcher runtime
 file, and independent Codex browser profile under:
 
-`%APPDATA%\Codex Taskboard`
+`%APPDATA%\Antigravity Taskboard`
 
 Launcher logs are stored under:
 
-`%LOCALAPPDATA%\Codex Taskboard\Logs`
+`%LOCALAPPDATA%\Antigravity Taskboard\Logs`
 
 The launcher also installs the bundled `manage-taskboard` Skill in the current
 user's `.agents\skills\manage-taskboard` directory.
@@ -29,7 +29,7 @@ user's `.agents\skills\manage-taskboard` directory.
 - Cloud collaboration is optional. When a user configures it, Taskboard data is
   sent to the deployment selected by that user.
 
-Codex Taskboard does not include advertising or a project-maintainer analytics
+Antigravity Taskboard does not include advertising or a project-maintainer analytics
 service.
 
 ## Removing data

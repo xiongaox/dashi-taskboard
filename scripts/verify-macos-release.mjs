@@ -78,7 +78,7 @@ function verifyApp(targetPath) {
   if (!signingDetails(targetPath).includes(`TeamIdentifier=${releasePolicy.appleTeamId}`)) {
     throw new Error(`App does not use Apple Team ${releasePolicy.appleTeamId}`);
   }
-  const launcherPath = path.join(targetPath, "Contents", "MacOS", "codex-taskboard-launcher");
+  const launcherPath = path.join(targetPath, "Contents", "MacOS", "antigravity-taskboard-launcher");
   if (!signingDetails(launcherPath).includes(`TeamIdentifier=${releasePolicy.appleTeamId}`)) {
     throw new Error(`Launcher does not use Apple Team ${releasePolicy.appleTeamId}`);
   }
@@ -122,7 +122,7 @@ async function manifest(root, relative = "") {
   return entries;
 }
 
-const artifactName = `Codex.Taskboard_${packageJson.version}_universal.app.tar.gz`;
+const artifactName = `Antigravity.Taskboard_${packageJson.version}_universal.app.tar.gz`;
 const artifactPath = path.join(releaseDirectory, artifactName);
 const signaturePath = `${artifactPath}.sig`;
 const signature = await readFile(signaturePath, "utf8");
@@ -161,7 +161,7 @@ if (!signingDetails(dmgPath).includes(`TeamIdentifier=${releasePolicy.appleTeamI
   throw new Error(`DMG does not use Apple Team ${releasePolicy.appleTeamId}`);
 }
 
-const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "codex-taskboard-release-verify."));
+const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "antigravity-taskboard-release-verify."));
 let mountedDmg = null;
 try {
   const updaterDirectory = path.join(temporaryRoot, "updater");

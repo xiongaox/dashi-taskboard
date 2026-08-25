@@ -5,19 +5,19 @@
 - ChatGPT Pro 对话：https://chatgpt.com/c/6a6b2b0e-9dc0-83ea-a57e-3addec457e70
 - 源码基线：`677b54451db707ae6132486b6593b7be11e4ee09`
 - 提交给 ChatGPT Pro 的源码 ZIP：
-  - 文件：`codex-taskboard-pro-677b544.zip`
+  - 文件：`antigravity-taskboard-pro-677b544.zip`
   - 字节数：`1,645,317`
   - SHA-256：`a1a96179554d69cb2770910c7857981fa2a14fb39afcaa6e6fcfc0b07a17fef6`
 - ChatGPT Pro 交付 ZIP：
-  - 文件：`codex-taskboard-pro-3col-board.zip`
+  - 文件：`antigravity-taskboard-pro-3col-board.zip`
   - 字节数：`1,635,271`
   - SHA-256：`a3cca47873283f4eec2a4710fb46f7cd5427bdc310318494598b7db3ca6cf14e`
 - ChatGPT Pro 主补丁：
-  - 文件：`codex-taskboard-pro-3col-board.patch`
+  - 文件：`antigravity-taskboard-pro-3col-board.patch`
   - 字节数：`67,714`
   - SHA-256：`5393f54db5c5e2dca8071f2a999dda49a39da4058076945320455b223f7b832a`
 - ChatGPT Pro 修正补丁：
-  - 文件：`codex-taskboard-pro-3col-board-fix.patch`
+  - 文件：`antigravity-taskboard-pro-3col-board-fix.patch`
   - 字节数：`3,035`
   - SHA-256：`091df00ba8e1d9304f86109f731564de06f5301f574b7a90ece4f1a0353f1044`
 

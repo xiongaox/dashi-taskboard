@@ -17,10 +17,10 @@ const sourceRef = process.env.TASKBOARD_INJECTION_SOURCE_REF;
 const source = sourceRef
   ? (await execFileAsync(
       "git",
-      ["show", `${sourceRef}:inject/codex-taskboard.user.js`],
+      ["show", `${sourceRef}:inject/antigravity-taskboard.user.js`],
       { cwd: projectRoot, maxBuffer: 2 * 1024 * 1024 },
     )).stdout
-  : await readFile(new URL("../inject/codex-taskboard.user.js", import.meta.url), "utf8");
+  : await readFile(new URL("../inject/antigravity-taskboard.user.js", import.meta.url), "utf8");
 const embeddedHostSource = await readFile(
   new URL("../web/src/embeddedHost.mjs", import.meta.url),
   "utf8",
@@ -144,9 +144,9 @@ function fixtureHtml(origin) {
           }
           if (request.action === "open-external") {
             window.__externalOpenUrl = request.url;
-            const frame = document.getElementById("codex-taskboard-frame");
+            const frame = document.getElementById("antigravity-taskboard-frame");
             window.__frameVisibleBeforeNavigation = frame?.hidden === false;
-            window.__statusHiddenBeforeNavigation = document.getElementById("codex-taskboard-status")?.hidden === true;
+            window.__statusHiddenBeforeNavigation = document.getElementById("antigravity-taskboard-status")?.hidden === true;
             frame?.addEventListener("load", () => {
               window.__hostileNavigationLoaded = true;
               window.__resolveHostileNavigationLoaded();
@@ -185,7 +185,7 @@ function fixtureHtml(origin) {
         publishHeartbeat();
         const heartbeatTimer = setInterval(publishHeartbeat, 500);
         await new Promise((resolve) => setTimeout(resolve, 0));
-        const entry = document.getElementById("codex-taskboard-entry");
+        const entry = document.getElementById("antigravity-taskboard-entry");
         const panel = document.querySelector("[data-browser-sidebar-webview]");
         const panelVisibleBefore = getComputedStyle(panel).visibility !== "hidden";
         const hostileNavigationLoaded = new Promise((resolve) => {
@@ -194,8 +194,8 @@ function fixtureHtml(origin) {
         entry?.click();
         await hostileNavigationLoaded;
 
-        const page = document.getElementById("codex-taskboard-page");
-        const frame = document.getElementById("codex-taskboard-frame");
+        const page = document.getElementById("antigravity-taskboard-page");
+        const frame = document.getElementById("antigravity-taskboard-frame");
         const surface = document.getElementById("surface");
         const conversation = document.getElementById("conversation");
         const result = {
@@ -207,12 +207,12 @@ function fixtureHtml(origin) {
           frameMounted: frame?.parentElement === page,
           frameVisible: Boolean(frame && !frame.hidden && getComputedStyle(frame).display !== "none"),
           frameIsolated: frame?.contentDocument === null,
-          statusHidden: document.getElementById("codex-taskboard-status")?.hidden === true,
+          statusHidden: document.getElementById("antigravity-taskboard-status")?.hidden === true,
           frameMessages: window.__frameMessages,
           externalOpenUrl: window.__externalOpenUrl,
           frameVisibleBeforeNavigation: window.__frameVisibleBeforeNavigation,
           statusHiddenBeforeNavigation: window.__statusHiddenBeforeNavigation,
-          hostileNavigationRevoked: Boolean(frame?.hidden && !document.getElementById("codex-taskboard-status")?.hidden),
+          hostileNavigationRevoked: Boolean(frame?.hidden && !document.getElementById("antigravity-taskboard-status")?.hidden),
           forgedThreadOpened: window.__forgedThreadOpened,
           injectionError: window.__injectionError,
         };
@@ -241,7 +241,7 @@ test("Taskboard fills the workspace, opens HTTPS links and revokes hostile ifram
     }
     if (request.url?.startsWith("/taskboard")) {
       response.setHeader("access-control-allow-origin", "null");
-      response.setHeader("access-control-expose-headers", "x-codex-taskboard-proof");
+      response.setHeader("access-control-expose-headers", "x-antigravity-taskboard-proof");
       response.setHeader("access-control-allow-private-network", "true");
       if (request.method === "OPTIONS") {
         response.statusCode = 204;
@@ -251,7 +251,7 @@ test("Taskboard fills the workspace, opens HTTPS links and revokes hostile ifram
       const challenge = new URL(request.url, "http://127.0.0.1")
         .searchParams.get("__codex_taskboard_challenge");
       response.setHeader(
-        "x-codex-taskboard-proof",
+        "x-antigravity-taskboard-proof",
         createHmac("sha256", instanceSecret).update(challenge).digest("hex"),
       );
       response.setHeader("content-type", "text/html; charset=utf-8");

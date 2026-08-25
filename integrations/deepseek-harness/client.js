@@ -1,25 +1,25 @@
 window.__ModuleLoader__.load({
-  id: "dsh-codex-taskboard",
+  id: "dsh-antigravity-taskboard",
   factory: (require) => {
     const module = { exports: {} };
     const exports = module.exports;
     const React = require("react");
     const { useEffect, useState } = React;
 
-    const ROUTE = "/integrations/codex-taskboard";
-    const PANEL_ID = "dsh-codex-taskboard-panel";
-    const STYLE_ID = "dsh-codex-taskboard-style";
+    const ROUTE = "/integrations/antigravity-taskboard";
+    const PANEL_ID = "dsh-antigravity-taskboard-panel";
+    const STYLE_ID = "dsh-antigravity-taskboard-style";
     const CSS = `
-.dsh-codex-taskboard-trigger{box-sizing:border-box;display:flex;align-items:center;gap:8px;width:calc(100% + 8px);height:34px;margin:4px -4px;padding:6px 2px 6px 10px;border:0;border-radius:12px;background:transparent;color:var(--dsw-alias-label-primary);cursor:pointer;font:inherit;overflow:hidden}
-.dsh-codex-taskboard-trigger:hover{background:var(--dsw-alias-interactive-bg-hover)}
-.dsh-codex-taskboard-trigger.rail{justify-content:center;width:36px;height:36px;margin:8px 0 10px;padding:0;border-radius:50%}
-.dsh-codex-taskboard-label{white-space:nowrap;overflow:hidden}
-.dsh-codex-taskboard-panel{position:fixed;z-index:900;display:flex;flex-direction:column;box-sizing:border-box;border-left:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);box-shadow:var(--dsw-shadow-lv3)}
-.dsh-codex-taskboard-header{display:flex;flex:none;align-items:center;justify-content:space-between;height:48px;padding:8px 14px 8px 18px;box-sizing:border-box;color:var(--dsw-alias-label-primary)}
-.dsh-codex-taskboard-actions{display:flex;gap:8px}
-.dsh-codex-taskboard-action{border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer;padding:5px 9px;font:inherit}
-.dsh-codex-taskboard-action:hover{background:var(--dsw-alias-interactive-bg-hover)}
-.dsh-codex-taskboard-frame{flex:1;min-height:0;border:0;background:#fff}
+.dsh-antigravity-taskboard-trigger{box-sizing:border-box;display:flex;align-items:center;gap:8px;width:calc(100% + 8px);height:34px;margin:4px -4px;padding:6px 2px 6px 10px;border:0;border-radius:12px;background:transparent;color:var(--dsw-alias-label-primary);cursor:pointer;font:inherit;overflow:hidden}
+.dsh-antigravity-taskboard-trigger:hover{background:var(--dsw-alias-interactive-bg-hover)}
+.dsh-antigravity-taskboard-trigger.rail{justify-content:center;width:36px;height:36px;margin:8px 0 10px;padding:0;border-radius:50%}
+.dsh-antigravity-taskboard-label{white-space:nowrap;overflow:hidden}
+.dsh-antigravity-taskboard-panel{position:fixed;z-index:900;display:flex;flex-direction:column;box-sizing:border-box;border-left:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);box-shadow:var(--dsw-shadow-lv3)}
+.dsh-antigravity-taskboard-header{display:flex;flex:none;align-items:center;justify-content:space-between;height:48px;padding:8px 14px 8px 18px;box-sizing:border-box;color:var(--dsw-alias-label-primary)}
+.dsh-antigravity-taskboard-actions{display:flex;gap:8px}
+.dsh-antigravity-taskboard-action{border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer;padding:5px 9px;font:inherit}
+.dsh-antigravity-taskboard-action:hover{background:var(--dsw-alias-interactive-bg-hover)}
+.dsh-antigravity-taskboard-frame{flex:1;min-height:0;border:0;background:#fff}
 `;
 
     function centerColumnBox() {
@@ -77,38 +77,38 @@ window.__ModuleLoader__.load({
         "aside",
         {
           id: PANEL_ID,
-          className: "dsh-codex-taskboard-panel",
+          className: "dsh-antigravity-taskboard-panel",
           style: box,
           "aria-label": "任务面板",
         },
         React.createElement(
           "div",
-          { className: "dsh-codex-taskboard-header" },
+          { className: "dsh-antigravity-taskboard-header" },
           React.createElement("strong", null, "任务面板"),
           React.createElement(
             "div",
-            { className: "dsh-codex-taskboard-actions" },
+            { className: "dsh-antigravity-taskboard-actions" },
             React.createElement(
               "button",
               {
                 type: "button",
-                className: "dsh-codex-taskboard-action",
+                className: "dsh-antigravity-taskboard-action",
                 onClick: () => setGeneration((value) => value + 1),
               },
               "刷新",
             ),
             React.createElement(
               "button",
-              { type: "button", className: "dsh-codex-taskboard-action", onClick: onClose },
+              { type: "button", className: "dsh-antigravity-taskboard-action", onClick: onClose },
               "关闭",
             ),
           ),
         ),
         React.createElement("iframe", {
           key: generation,
-          className: "dsh-codex-taskboard-frame",
+          className: "dsh-antigravity-taskboard-frame",
           src: `${ROUTE}?refresh=${generation}`,
-          title: "Codex Taskboard",
+          title: "Antigravity Taskboard",
         }),
       );
     }
@@ -122,7 +122,7 @@ window.__ModuleLoader__.load({
           "button",
           {
             type: "button",
-            className: `dsh-codex-taskboard-trigger${wide ? "" : " rail"}`,
+            className: `dsh-antigravity-taskboard-trigger${wide ? "" : " rail"}`,
             title: "任务面板",
             "aria-label": "任务面板",
             "aria-expanded": open,
@@ -130,7 +130,7 @@ window.__ModuleLoader__.load({
             onClick: () => setOpen((value) => !value),
           },
           React.createElement(ChecklistIcon),
-          wide && React.createElement("span", { className: "dsh-codex-taskboard-label" }, "任务面板"),
+          wide && React.createElement("span", { className: "dsh-antigravity-taskboard-label" }, "任务面板"),
         ),
         open && React.createElement(TaskboardPanel, { onClose: () => setOpen(false) }),
       );
@@ -142,15 +142,15 @@ window.__ModuleLoader__.load({
       ctx.effect(() => {
         const style = document.createElement("style");
         style.id = STYLE_ID;
-        style.dataset.plugin = "dsh-codex-taskboard";
+        style.dataset.plugin = "dsh-antigravity-taskboard";
         style.textContent = CSS;
         document.head.appendChild(style);
         return () => style.remove();
-      }, "codex-taskboard: styles");
+      }, "antigravity-taskboard: styles");
 
       ctx.slots.inject("sidebar.footer.action", () => ctx.slots.register({
         name: "sidebar.footer.action",
-        id: "codex-taskboard",
+        id: "antigravity-taskboard",
         order: 0,
       }, TaskboardEntry));
     }

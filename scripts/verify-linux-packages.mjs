@@ -55,14 +55,14 @@ async function assertElfX64(filePath) {
 }
 
 async function verifyPackageRoot(root, label) {
-  const launcherPath = path.join(root, "usr", "bin", "codex-taskboard-launcher");
-  const nodePath = path.join(root, "usr", "bin", "codex-taskboard-node");
-  const resourceRoot = path.join(root, "usr", "lib", "Codex Taskboard");
+  const launcherPath = path.join(root, "usr", "bin", "antigravity-taskboard-launcher");
+  const nodePath = path.join(root, "usr", "bin", "antigravity-taskboard-node");
+  const resourceRoot = path.join(root, "usr", "lib", "Antigravity Taskboard");
   const taskctlPath = path.join(resourceRoot, "bin", "taskctl");
   const requiredResources = [
     "app/cli/taskctl.mjs",
     "app/dist/web/index.html",
-    "app/inject/codex-taskboard.user.js",
+    "app/inject/antigravity-taskboard.user.js",
     "app/node_modules/smol-toml/package.json",
     "app/scripts/codex-injector.mjs",
     "app/server/app.mjs",
@@ -83,7 +83,7 @@ async function verifyPackageRoot(root, label) {
 
   const wrapper = await readFile(taskctlPath, "utf8");
   if (
-    !wrapper.includes("codex-taskboard-node")
+    !wrapper.includes("antigravity-taskboard-node")
     || !wrapper.includes("app/cli/taskctl.mjs")
   ) {
     throw new Error(`${label} taskctl does not use the packaged Node and CLI`);
@@ -94,7 +94,7 @@ async function verifyPackageRoot(root, label) {
   }
 }
 
-const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "codex-taskboard-linux-packages."));
+const temporaryRoot = await mkdtemp(path.join(os.tmpdir(), "antigravity-taskboard-linux-packages."));
 try {
   if (run("dpkg-deb", ["--field", debPath, "Architecture"]) !== "amd64") {
     throw new Error("Debian package architecture is not amd64");

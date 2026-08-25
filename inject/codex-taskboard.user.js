@@ -5,18 +5,18 @@
   const SOURCE_HASH = window.__CODEX_TASKBOARD_SOURCE_HASH__;
   const SENTINEL_KEY = "__codexTaskboardInjection__";
   const DEFAULT_TASKBOARD_URL = "http://127.0.0.1:47823/?host=codex";
-  const ENTRY_ID = "codex-taskboard-entry";
-  const PAGE_ID = "codex-taskboard-page";
-  const FRAME_ID = "codex-taskboard-frame";
-  const DRAG_REGION_ID = "codex-taskboard-drag-region";
-  const NO_DRAG_LEFT_ID = "codex-taskboard-no-drag-left";
-  const NO_DRAG_RIGHT_ID = "codex-taskboard-no-drag-right";
-  const STATUS_ID = "codex-taskboard-status";
-  const STYLE_ID = "codex-taskboard-inject-style";
-  const OWNED_ATTRIBUTE = "data-codex-taskboard-owned";
-  const HIDDEN_ATTRIBUTE = "data-codex-taskboard-native-hidden";
-  const HOST_ATTRIBUTE = "data-codex-taskboard-page-host";
-  const NATIVE_SELECTED_ATTRIBUTE = "data-codex-taskboard-native-selected";
+  const ENTRY_ID = "antigravity-taskboard-entry";
+  const PAGE_ID = "antigravity-taskboard-page";
+  const FRAME_ID = "antigravity-taskboard-frame";
+  const DRAG_REGION_ID = "antigravity-taskboard-drag-region";
+  const NO_DRAG_LEFT_ID = "antigravity-taskboard-no-drag-left";
+  const NO_DRAG_RIGHT_ID = "antigravity-taskboard-no-drag-right";
+  const STATUS_ID = "antigravity-taskboard-status";
+  const STYLE_ID = "antigravity-taskboard-inject-style";
+  const OWNED_ATTRIBUTE = "data-antigravity-taskboard-owned";
+  const HIDDEN_ATTRIBUTE = "data-antigravity-taskboard-native-hidden";
+  const HOST_ATTRIBUTE = "data-antigravity-taskboard-page-host";
+  const NATIVE_SELECTED_ATTRIBUTE = "data-antigravity-taskboard-native-selected";
   const HOST_REQUEST_MESSAGE = "__codexTaskboardHostRequestV1";
   const HOST_RESPONSE_MESSAGE = "__codexTaskboardHostResponseV1";
   const HOST_HEARTBEAT_MESSAGE = "__codexTaskboardHostHeartbeatV1";
@@ -1438,7 +1438,7 @@
     taskboardOrigin = taskboardUrl.origin;
     frameTaskboardUrl = taskboardUrl.href;
     frameOrigin = "null";
-    const frameName = `codex-taskboard-${crypto.randomUUID()}`;
+    const frameName = `antigravity-taskboard-${crypto.randomUUID()}`;
     frameCapability = crypto.randomUUID();
     const nextFrame = document.createElement("iframe");
     nextFrame.id = FRAME_ID;
@@ -1685,7 +1685,7 @@
     hideNativeHeader();
     muteNativeSelection();
     page.hidden = false;
-    document.documentElement.setAttribute("data-codex-taskboard-open", "true");
+    document.documentElement.setAttribute("data-antigravity-taskboard-open", "true");
   }
 
   function closeTaskboard(restoreFocus = true) {
@@ -1696,7 +1696,7 @@
     restoreNativeContent();
     restoreNativeBrowserPanel();
     restoreNativeSelection();
-    document.documentElement.removeAttribute("data-codex-taskboard-open");
+    document.documentElement.removeAttribute("data-antigravity-taskboard-open");
     syncEntryState();
     if (restoreFocus) lastFocusedElement?.focus?.();
     lastFocusedElement = null;

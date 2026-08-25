@@ -834,7 +834,7 @@ test("taskctl cloud status, logout, and project map use local companion endpoint
 
 test("taskctl companion-control commands use the tokenized launcher runtime endpoint", async () => {
   const calls = [];
-  const runtimeFile = "C:\\Users\\admin\\AppData\\Roaming\\Codex Taskboard\\launcher-runtime.json";
+  const runtimeFile = "C:\\Users\\admin\\AppData\\Roaming\\Antigravity Taskboard\\launcher-runtime.json";
   const instanceToken = "7a6f8d37-78ce-46c9-87a8-08e10db88da2";
   const overrides = {
     env: { CODEX_TASKBOARD_RUNTIME_FILE: runtimeFile },

@@ -1704,7 +1704,7 @@ export function createTaskboardServer(options = {}) {
           "access-control-allow-headers",
           request.headers["access-control-request-headers"] ?? "content-type",
         );
-        response.setHeader("access-control-expose-headers", "x-codex-taskboard-proof");
+        response.setHeader("access-control-expose-headers", "x-antigravity-taskboard-proof");
         response.setHeader("access-control-allow-private-network", "true");
         response.setHeader("vary", "origin");
         if (request.method === "OPTIONS") {
@@ -1714,12 +1714,12 @@ export function createTaskboardServer(options = {}) {
         }
       }
       if (resolved.instanceToken && origin === "app://-") {
-        const challenge = request.headers["x-codex-taskboard-challenge"];
+        const challenge = request.headers["x-antigravity-taskboard-challenge"];
         if (typeof challenge !== "string" || !/^[a-f0-9]{32,128}$/i.test(challenge)) {
           throw new ApiError(401, "INVALID_INSTANCE_CHALLENGE", "Launcher challenge is required");
         }
         response.setHeader(
-          "x-codex-taskboard-proof",
+          "x-antigravity-taskboard-proof",
           createHmac("sha256", resolved.instanceSecret).update(challenge).digest("hex"),
         );
       }
@@ -1741,13 +1741,13 @@ export function createTaskboardServer(options = {}) {
       if (pathname === "/health") {
         if (request.method !== "GET") return methodNotAllowed(response, ["GET"]);
         if (resolved.instanceToken) {
-          const challenge = request.headers["x-codex-taskboard-challenge"];
+          const challenge = request.headers["x-antigravity-taskboard-challenge"];
           if (typeof challenge !== "string" || !/^[a-f0-9]{32,128}$/i.test(challenge)) {
             throw new ApiError(401, "INVALID_INSTANCE_CHALLENGE", "Launcher challenge is required");
           }
           return sendJson(response, 200, {
             status: "ok",
-            product: "codex-taskboard",
+            product: "antigravity-taskboard",
             version: resolved.version,
             proof: createHmac("sha256", resolved.instanceSecret)
               .update(challenge)

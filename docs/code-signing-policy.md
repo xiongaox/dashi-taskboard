@@ -8,7 +8,7 @@ continuous-integration artifacts remain unsigned until that approval.
 ## Scope
 
 This policy applies to official Windows executables and installers published
-by the Codex Taskboard project. Development builds, pull-request artifacts,
+by the Antigravity Taskboard project. Development builds, pull-request artifacts,
 and local builds are not signed.
 
 ## Team roles
@@ -36,7 +36,7 @@ and local builds are not signed.
 
 ## Privacy
 
-Codex Taskboard's data handling and network activity are documented in the
+Antigravity Taskboard's data handling and network activity are documented in the
 [Privacy policy](../PRIVACY.md).
 
 ## Incident response

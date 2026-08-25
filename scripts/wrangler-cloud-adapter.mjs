@@ -39,8 +39,8 @@ export function createWranglerCloudAdapters({
   persistTo,
   configPath,
   wranglerExecutable = defaultWrangler,
-  database = "codex-taskboard-db",
-  bucket = "codex-taskboard-attachments",
+  database = "antigravity-taskboard-db",
+  bucket = "antigravity-taskboard-attachments",
   preparedImportSql,
   environment = process.env,
   runCommand = (executable, args, options = {}) => {

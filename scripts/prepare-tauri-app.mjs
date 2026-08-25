@@ -48,13 +48,13 @@ const extractionDirectory = path.join(runtimeCacheDirectory, "extracted");
 const target = parseTarget(process.argv.slice(2));
 
 if (target === windowsTarget && process.platform !== "win32") {
-  throw new Error("Codex Taskboard for Windows must be prepared on Windows");
+  throw new Error("Antigravity Taskboard for Windows must be prepared on Windows");
 }
 if (target === linuxTarget && process.platform !== "linux") {
-  throw new Error("Codex Taskboard for Linux must be prepared on Linux");
+  throw new Error("Antigravity Taskboard for Linux must be prepared on Linux");
 }
 if (target !== windowsTarget && target !== linuxTarget && process.platform !== "darwin") {
-  throw new Error("Codex Taskboard for macOS must be prepared on macOS");
+  throw new Error("Antigravity Taskboard for macOS must be prepared on macOS");
 }
 
 function parseTarget(argv) {
@@ -205,7 +205,7 @@ async function prepareLinuxNodeRuntime() {
   const runtime = path.join(destination, `node-v${nodeVersion}-linux-x64`);
   const targetPath = path.join(
     binariesDirectory,
-    `codex-taskboard-node-${linuxTarget}`,
+    `antigravity-taskboard-node-${linuxTarget}`,
   );
   await mkdir(binariesDirectory, { recursive: true });
   await rm(targetPath, { force: true });
@@ -261,8 +261,8 @@ async function copyApplicationResources() {
   }
   await mkdir(path.join(appResources, "inject"), { recursive: true });
   await copyFile(
-    path.join(projectRoot, "inject", "codex-taskboard.user.js"),
-    path.join(appResources, "inject", "codex-taskboard.user.js"),
+    path.join(projectRoot, "inject", "antigravity-taskboard.user.js"),
+    path.join(appResources, "inject", "antigravity-taskboard.user.js"),
   );
   await mkdir(path.join(appResources, "cli"), { recursive: true });
   await copyFile(
@@ -274,7 +274,7 @@ async function copyApplicationResources() {
     const taskctlWrapper = [
       "@echo off",
       "setlocal",
-      "set \"CODEX_TASKBOARD_DATA_DIR=%APPDATA%\\Codex Taskboard\"",
+      "set \"CODEX_TASKBOARD_DATA_DIR=%APPDATA%\\Antigravity Taskboard\"",
       "set \"CODEX_TASKBOARD_RUNTIME_FILE=%CODEX_TASKBOARD_DATA_DIR%\\launcher-runtime.json\"",
       "\"%~dp0..\\node.exe\" \"%~dp0..\\app\\cli\\taskctl.mjs\" %*",
       "exit /b %ERRORLEVEL%",
@@ -292,9 +292,9 @@ set -u
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 RESOURCE_DIR="$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)"
-export CODEX_TASKBOARD_DATA_DIR="\${XDG_DATA_HOME:-$HOME/.local/share}/Codex Taskboard"
+export CODEX_TASKBOARD_DATA_DIR="\${XDG_DATA_HOME:-$HOME/.local/share}/Antigravity Taskboard"
 export CODEX_TASKBOARD_RUNTIME_FILE="$CODEX_TASKBOARD_DATA_DIR/launcher-runtime.json"
-exec "$RESOURCE_DIR/../../bin/codex-taskboard-node" "$RESOURCE_DIR/app/cli/taskctl.mjs" "$@"
+exec "$RESOURCE_DIR/../../bin/antigravity-taskboard-node" "$RESOURCE_DIR/app/cli/taskctl.mjs" "$@"
 `;
     const taskctlPath = path.join(resourcesDirectory, "bin", "taskctl");
     await mkdir(path.dirname(taskctlPath), { recursive: true });
@@ -308,7 +308,7 @@ set -u
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CONTENTS_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-export CODEX_TASKBOARD_DATA_DIR="$HOME/Library/Application Support/Codex Taskboard"
+export CODEX_TASKBOARD_DATA_DIR="$HOME/Library/Application Support/Antigravity Taskboard"
 export CODEX_TASKBOARD_RUNTIME_FILE="$CODEX_TASKBOARD_DATA_DIR/launcher-runtime.json"
 exec "$CONTENTS_DIR/MacOS/node" "$CONTENTS_DIR/Resources/app/cli/taskctl.mjs" "$@"
 `;

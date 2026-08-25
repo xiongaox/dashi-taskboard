@@ -5,7 +5,7 @@ import vm from "node:vm";
 
 import { parseTaskboardAutomationHostRequest } from "../shared/taskboard-automation.mjs";
 
-const sourceUrl = new URL("../inject/codex-taskboard.user.js", import.meta.url);
+const sourceUrl = new URL("../inject/antigravity-taskboard.user.js", import.meta.url);
 const source = (await readFile(sourceUrl, "utf8")).replaceAll("\r\n", "\n");
 const webStyles = await readFile(new URL("../web/src/styles.css", import.meta.url), "utf8");
 const webApp = await readFile(new URL("../web/src/App.tsx", import.meta.url), "utf8");
@@ -45,11 +45,11 @@ test("entry clones the native Plugins row and the page covers the complete Codex
   assert.match(source, /const surface = viewport\?\.parentElement/);
   assert.match(source, /surface\.appendChild\(page\)/);
   assert.match(source, /#\$\{PAGE_ID\} \{[\s\S]*?top: 0;/);
-  assert.doesNotMatch(source, /--codex-taskboard-top-offset/);
+  assert.doesNotMatch(source, /--antigravity-taskboard-top-offset/);
   assert.match(source, /child\.setAttribute\(HIDDEN_ATTRIBUTE, "true"\)/);
   assert.match(source, /page\.hidden = false/);
-  assert.doesNotMatch(source, /codex-taskboard-overlay/);
-  assert.doesNotMatch(source, /codex-taskboard-toolbar/);
+  assert.doesNotMatch(source, /antigravity-taskboard-overlay/);
+  assert.doesNotMatch(source, /antigravity-taskboard-toolbar/);
   assert.doesNotMatch(source, /aria-modal/);
 });
 
@@ -69,18 +69,18 @@ test("the embedded header fills the native titlebar without clipping or a full-p
   assert.doesNotMatch(source, /headerRightInset/);
   assert.doesNotMatch(source, /NATIVE_HEADER_RIGHT_INSET/);
   assert.doesNotMatch(source, /clip-path: polygon/);
-  assert.doesNotMatch(source, /codex-taskboard-titlebar-fill/);
+  assert.doesNotMatch(source, /antigravity-taskboard-titlebar-fill/);
   assert.doesNotMatch(source, /#\$\{PAGE_ID\} \{[^}]*-webkit-app-region: no-drag !important;/);
   assert.doesNotMatch(source, /#\$\{FRAME_ID\} \{[^}]*-webkit-app-region: no-drag !important;/);
-  assert.match(source, /const NO_DRAG_LEFT_ID = "codex-taskboard-no-drag-left"/);
-  assert.match(source, /const NO_DRAG_RIGHT_ID = "codex-taskboard-no-drag-right"/);
+  assert.match(source, /const NO_DRAG_LEFT_ID = "antigravity-taskboard-no-drag-left"/);
+  assert.match(source, /const NO_DRAG_RIGHT_ID = "antigravity-taskboard-no-drag-right"/);
   assert.match(source, /window\.addEventListener\("resize", scheduleRefresh\)/);
 });
 
 test("only the empty embedded header spacer is draggable", () => {
   assert.match(webApp, /<div ref=\{dragRegionRef\} className="workspace-drag-region" aria-hidden="true" \/>/);
   assert.match(webApp, /type: "taskboard:drag-region"/);
-  assert.match(source, /const DRAG_REGION_ID = "codex-taskboard-drag-region"/);
+  assert.match(source, /const DRAG_REGION_ID = "antigravity-taskboard-drag-region"/);
   assert.match(source, /message\.type === "taskboard:drag-region"/);
   assert.match(source, /function updateDragRegion\(payload\)/);
   assert.match(source, /#\$\{DRAG_REGION_ID\} \{[\s\S]*?-webkit-app-region: drag;/);
@@ -439,7 +439,7 @@ test("cleanup removes observers, listeners, timers and owned DOM", () => {
   assert.match(source, /document\.removeEventListener\("click", onDocumentClick, true\)/);
   assert.match(source, /window\.removeEventListener\("popstate", onNativeRouteChange\)/);
   assert.match(source, /window\.clearTimeout\(reattachTimer\)/);
-  assert.match(source, /data-codex-taskboard-owned/);
+  assert.match(source, /data-antigravity-taskboard-owned/);
   assert.match(source, /delete window\[SENTINEL_KEY\]/);
 });
 

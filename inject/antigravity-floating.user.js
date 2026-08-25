@@ -1,8 +1,8 @@
 
 (() => {
-  if (document.getElementById("codex-taskboard-frame")) return;
+  if (document.getElementById("antigravity-taskboard-frame")) return;
   const frame = document.createElement("iframe");
-  frame.id = "codex-taskboard-frame";
+  frame.id = "antigravity-taskboard-frame";
   frame.src = "http://127.0.0.1:47823";
   frame.style.position = "fixed";
   frame.style.left = "20px";
