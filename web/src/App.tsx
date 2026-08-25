@@ -2837,9 +2837,12 @@ export function App() {
         : codexProjectContext?.workspacePath
           ?? deviceWorkspacePaths[task.projectId]
           ?? taskboardProject?.workspacePath;
+    const shortSkillPath = manageTaskboardSkillPath.split(/[\\\\/]/).slice(-3).join('/');
+    const workspaceInfo = workspacePath ? ` 项目路径：${workspacePath}` : "";
+    const workspaceInfoEn = workspacePath ? ` Workspace: ${workspacePath}` : "";
     const embeddedInstruction = text(
-      `[$manage-taskboard](${manageTaskboardSkillPath}) 议题 ID：${task.identifier}`,
-      `[$manage-taskboard](${manageTaskboardSkillPath}) Issue ID: ${task.identifier}`,
+      `[$manage-taskboard](${shortSkillPath}) 议题 ID：${task.identifier}${workspaceInfo}`,
+      `[$manage-taskboard](${shortSkillPath}) Issue ID: ${task.identifier}${workspaceInfoEn}`,
     );
 
     if (
