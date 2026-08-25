@@ -619,7 +619,6 @@ test("cloud mode exposes machine capabilities only to loopback while local mode 
   try {
     for (const pathname of [
       "/api/meta",
-      "/api/device-workspaces",
       "/api/projects/portfolio/development-contexts",
     ]) {
       const response = await fetch(`${lanBaseUrl}${pathname}`);
@@ -639,8 +638,6 @@ test("cloud mode exposes machine capabilities only to loopback while local mode 
     assert.equal(upstreamCalls, 0);
 
     await store.clearCloud();
-    const localResponse = await fetch(`${lanBaseUrl}/api/device-workspaces`);
-    assert.equal(localResponse.status, 200);
     const localProjects = await fetch(`${lanBaseUrl}/api/projects`);
     assert.equal(localProjects.status, 200);
   } finally {

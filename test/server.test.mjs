@@ -338,58 +338,10 @@ test("task thread migration excludes comment-only aggregate entries", async () =
   assert.equal(comments.body.comments[0].threadId, "thread-comment-only");
 });
 
-test("development context scan resolves the current Codex conversation workspace", async () => {
-  let expectedWorkspace;
-  const baseUrl = await startServer(async (directory) => {
-    expectedWorkspace = directory;
-    const processesPath = path.join(directory, "chat_processes.json");
-    await writeFile(processesPath, JSON.stringify({
-      recent: [{
-        conversationId: "019f7f96-287b-7da0-bc7f-ffe03af85cc8",
-        cwd: directory,
-        updatedAtMs: 20,
-      }],
-    }));
-    return {
-      codexStatePath: path.join(directory, "missing-state.json"),
-      codexProcessesPath: processesPath,
-    };
-  });
-  const result = await request(
-    baseUrl,
-    "/api/projects/local/development-contexts?codexThreadId=019f7f96-287b-7da0-bc7f-ffe03af85cc8",
-  );
-  assert.equal(result.response.status, 200);
-  assert.equal(result.body.workspacePath, expectedWorkspace);
-  assert.deepEqual(result.body.contexts, []);
 
-  const deviceWorkspace = path.join(expectedWorkspace, "another-device-workspace");
-  const deviceResult = await request(
-    baseUrl,
-    `/api/projects/local/development-contexts?workspacePath=${encodeURIComponent(deviceWorkspace)}`,
-  );
-  assert.equal(deviceResult.response.status, 200);
-  assert.equal(deviceResult.body.workspacePath, deviceWorkspace);
-});
 
-test("device workspaces come from this machine's Codex project roots", async () => {
-  const baseUrl = await startServer(async (directory) => {
-    const codexStatePath = path.join(directory, "codex-state.json");
-    await writeFile(codexStatePath, JSON.stringify({
-      "local-projects": {
-        "local-project-a": { rootPaths: ["/Users/alice/project-a"] },
-        "local-project-b": { rootPaths: ["/Users/alice/project-b"] },
-      },
-    }));
-    return { codexStatePath };
-  });
-  const result = await request(baseUrl, "/api/device-workspaces");
-  assert.equal(result.response.status, 200);
-  assert.deepEqual(result.body.workspaces, {
-    "local-project-a": "/Users/alice/project-a",
-    "local-project-b": "/Users/alice/project-b",
-  });
-});
+
+
 
 test("accepts private LAN requests and rejects public Host and Origin headers", async () => {
   const baseUrl = await startServer(undefined, { host: "0.0.0.0" });
@@ -557,110 +509,9 @@ test("moving a task updates its status and sort order", async () => {
   assert.equal(moveResult.body.task.version, 2);
 });
 
-test("remote task bindings keep their own identity and can be cleared independently", async () => {
-  const baseUrl = await startServer();
-  const legacy = (await request(baseUrl, "/api/tasks", {
-    method: "POST",
-    body: { title: "Legacy binding", threadId: "legacy-thread" },
-  })).body.task;
-  assert.equal(legacy.threadId, "legacy-thread");
-  assert.equal(legacy.threadBinding, null);
-  assert.equal(legacy.legacyLocalThreadId, "legacy-thread");
-  assert.deepEqual(legacy.conversationRefs.map((ref) => ({
-    threadId: ref.threadId,
-    legacyLocal: ref.legacyLocal,
-  })), [{ threadId: "legacy-thread", legacyLocal: true }]);
-  const binding = {
-    threadId: "remote-thread-a",
-    codexProjectId: "remote-project-a",
-    codexProjectKind: "remote",
-    codexHostId: "ssh-a",
-    workspacePath: "/same/remote/path",
-  };
-  const created = (await request(baseUrl, "/api/tasks", {
-    method: "POST",
-    body: { title: "Remote binding", threadId: binding.threadId, threadBinding: binding },
-  })).body.task;
-  assert.deepEqual(created.threadBinding, binding);
-  assert.deepEqual(created.conversationRefs.map((ref) => ref.codexHostId), ["ssh-a"]);
 
-  const continued = (await request(baseUrl, `/api/tasks/${created.id}/move`, {
-    method: "POST",
-    body: {
-      version: created.version,
-      status: "in_progress",
-      threadId: binding.threadId,
-    },
-  })).body.task;
-  assert.deepEqual(continued.threadBinding, binding);
 
-  const controllerComment = (await request(baseUrl, `/api/tasks/${created.id}/comments`, {
-    method: "POST",
-    body: { body: "Controller note", threadId: "controller-thread" },
-  })).body.comment;
-  assert.equal(controllerComment.threadBinding, null);
-  assert.equal(controllerComment.legacyLocalThreadId, "controller-thread");
 
-  const blocked = (await request(baseUrl, `/api/tasks/${created.id}/move`, {
-    method: "POST",
-    body: {
-      version: continued.version,
-      status: "blocked",
-      threadId: "controller-thread",
-      threadBinding: binding,
-    },
-  })).body.task;
-  assert.equal(blocked.threadId, binding.threadId);
-  assert.deepEqual(blocked.threadBinding, binding);
-  assert.deepEqual(blocked.conversationRefs.map((ref) => ({
-    threadId: ref.threadId,
-    legacyLocal: ref.legacyLocal ?? false,
-  })), [
-    { threadId: binding.threadId, legacyLocal: false },
-    { threadId: "controller-thread", legacyLocal: true },
-  ]);
-
-  const restored = (await request(baseUrl, `/api/tasks/${created.id}/move`, {
-    method: "POST",
-    body: {
-      version: blocked.version,
-      status: "todo",
-      threadId: "controller-thread",
-      threadBinding: null,
-    },
-  })).body.task;
-  assert.equal(restored.threadId, null);
-  assert.equal(restored.threadBinding, null);
-  assert.deepEqual(restored.conversationRefs.map((ref) => ref.threadId), ["controller-thread"]);
-});
-
-test("the active local Codex conversation supplies its exact task binding identity", async () => {
-  const baseUrl = await startServer();
-  const runtime = await request(baseUrl, "/api/local/host-runtime", {
-    method: "PUT",
-    body: {
-      threadId: "local-thread",
-      threadRunning: true,
-      threadTodoProgress: null,
-      codexProjectId: "local-project",
-      codexProjectKind: "local",
-      codexHostId: "local",
-      workspacePath: "/work/local-project",
-    },
-  });
-  assert.equal(runtime.response.status, 200);
-  const task = (await request(baseUrl, "/api/tasks", {
-    method: "POST",
-    body: { title: "Local binding", threadId: "local-thread" },
-  })).body.task;
-  assert.deepEqual(task.threadBinding, {
-    threadId: "local-thread",
-    codexProjectId: "local-project",
-    codexProjectKind: "local",
-    codexHostId: "local",
-    workspacePath: "/work/local-project",
-  });
-});
 
 test("issues support parent, sub-issue, blocking, and related issue relationships", async () => {
   const baseUrl = await startServer();

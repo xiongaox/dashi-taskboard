@@ -51,7 +51,7 @@ import {
   assigneeTargetForActor,
 } from "./actors";
 import { BoardColumn } from "./components/BoardColumn";
-import type { AiChatOpenThreadRequest } from "./components/AiChat";
+
 import { BoardCardDisplayMenu } from "./components/BoardCardDisplayMenu";
 import { DashboardView } from "./components/DashboardView";
 import { ProjectReadmeView } from "./components/ProjectReadmeView";
@@ -70,7 +70,7 @@ import {
   RefreshIcon,
   RelationIcon,
 } from "./components/SemanticIcons";
-import { ProjectAutomationMenu } from "./components/ProjectAutomationMenu";
+
 import { TaskboardIcon } from "./components/TaskboardIcon";
 import { TaskContextMenu } from "./components/TaskContextMenu";
 import { TaskDetail } from "./components/TaskDetail";
@@ -156,9 +156,6 @@ type TasksLoadError = {
 type LoadError = ProjectLoadError | TasksLoadError;
 const GANTT_ZOOM_OPTIONS: GanttZoom[] = ["day", "week", "month"];
 
-const AiChat = lazy(() => import("./components/AiChat").then((module) => ({
-  default: module.AiChat,
-})));
 const GanttView = lazy(() => import("./components/GanttView").then((module) => ({
   default: module.GanttView,
 })));
@@ -694,18 +691,9 @@ export function App() {
   const [developmentScanLoading, setDevelopmentScanLoading] = useState(false);
   const [manageTaskboardSkillPath, setManageTaskboardSkillPath] = useState("");
   const [taskboardMetadata, setTaskboardMetadata] = useState<TaskboardMetadata | null>(null);
-  const [localAiChatAvailable, setLocalAiChatAvailable] = useState(false);
-  const [aiImportReadyProjectId, setAiImportReadyProjectId] = useState<string | null>(null);
-  const [aiThreads, setAiThreads] = useState<AiChatThread[]>([]);
-  const [aiOpenThreadRequest, setAiOpenThreadRequest] = useState<AiChatOpenThreadRequest | null>(null);
+
   const [readActivityKeys, setReadActivityKeys] = useState<Record<string, string>>({});
-  const [codexThreadProgress, setCodexThreadProgress] = useState<
-    Record<string, {
-      completed: number | null;
-      total: number | null;
-      running: boolean;
-    } | null>
-  >({});
+
   const [processingNow, setProcessingNow] = useState(() => Date.now());
   const [recentProjectIds, setRecentProjectIds] = useState(readRecentProjectIds);
   const initialProjectId = query.get("project") ?? recentProjectIds[0] ?? ALL_PROJECTS_ID;
@@ -861,53 +849,7 @@ export function App() {
   const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? null;
   const isAllProjects = selectedProjectId === ALL_PROJECTS_ID;
   const isJiraProject = selectedProject?.source === "jira";
-  const automationModels = automationCatalog && automationCatalog.projectId === selectedProject?.id
-    ? automationCatalog.models
-    : [];
-  useEffect(() => {
-    setAutomationCatalog(null);
-    setAutomationCatalogError(null);
-    if (!selectedProject || !localAiChatAvailable) {
-      setAutomationCatalogLoading(false);
-      return;
-    }
-    const controller = new AbortController();
-    setAutomationCatalogLoading(true);
-    void getAiChatCatalog(selectedProject.id, controller.signal).then(
-      (catalog) => {
-        if (controller.signal.aborted) return;
-        setAutomationCatalog({ projectId: selectedProject.id, models: catalog.models });
-        setAutomationCatalogLoading(false);
-      },
-      (error) => {
-        if (controller.signal.aborted) return;
-        setAutomationCatalogError(error instanceof Error
-          ? error.message
-          : text("无法读取 Codex 模型目录", "Could not load the Codex model catalog."));
-        setAutomationCatalogLoading(false);
-      },
-    );
-    return () => controller.abort();
-  }, [localAiChatAvailable, selectedProject?.id, text]);
-  const aiImportProjectId = hasLoadedTasks
-    && tasks.length === 0
-    && selectedProject
-    && selectedProject.id !== GLOBAL_PROJECT_ID
-    && !isJiraProject
-    && localAiChatAvailable
-      ? selectedProject.id
-      : null;
-  useEffect(() => {
-    setAiImportReadyProjectId(null);
-    if (!aiImportProjectId) return;
-    const controller = new AbortController();
-    void getAiChatCatalog(aiImportProjectId, controller.signal)
-      .then(() => {
-        if (!controller.signal.aborted) setAiImportReadyProjectId(aiImportProjectId);
-      })
-      .catch(() => {});
-    return () => controller.abort();
-  }, [aiImportProjectId, selectedProject]);
+
   useLayoutEffect(() => {
     if (selectedProject) rememberProjectOpen(selectedProject.id);
   }, [rememberProjectOpen, selectedProject]);
@@ -1777,11 +1719,11 @@ export function App() {
       current?.operation === "initial" ? { ...current, requestId } : current
     ));
     try {
-      const [nextProjects, metadata, workspaces] = await Promise.all([
+      const [nextProjects, metadata] = await Promise.all([
         listProjects(signal),
         getTaskboardMetadata(signal),
-        listDeviceWorkspaces(signal),
       ]);
+      const workspaces = {};
       if (requestId !== projectsRequestRef.current) return;
       const [nextJiraConnection, nextTemporaryTasks] = await Promise.all([
         getJiraConnection(signal),
@@ -1799,9 +1741,9 @@ export function App() {
           : metadata
       ));
       setManageTaskboardSkillPath(metadata.manageTaskboardSkillPath ?? "");
-      setLocalAiChatAvailable(metadata.capabilities?.localAiChat === true);
+
       setDeviceWorkspacePaths((current) => {
-        const next = { ...current, ...workspaces };
+        const next = { ...current };
         delete next[GLOBAL_PROJECT_ID];
         if (JSON.stringify(next) === JSON.stringify(current)) return current;
         taskboardStorage.setItem(DEVICE_WORKSPACE_PATHS_KEY, JSON.stringify(next));
@@ -2135,35 +2077,7 @@ export function App() {
   const activeFilterCount = taskFilterCount(filters);
   const hasActiveTaskFilters = Boolean(search.trim()) || activeFilterCount > 0;
 
-  const trackedCodexThreadIds = useMemo(() => [...new Set(tasks
-    .filter((task) => task.status === "in_progress" && task.threadId)
-    .map((task) => normalizeCodexThreadId(task.threadId))
-    .filter(Boolean))].sort(), [tasks]);
-  const trackedCodexThreadIdsKey = trackedCodexThreadIds.join(",");
 
-  useEffect(() => {
-    if (trackedCodexThreadIds.length === 0) {
-      setCodexThreadProgress({});
-      return;
-    }
-    let disposed = false;
-    const sync = async () => {
-      try {
-        const progress = await getCodexThreadProgress(trackedCodexThreadIds);
-        if (!disposed) {
-          setCodexThreadProgress((current) => (
-            JSON.stringify(current) === JSON.stringify(progress) ? current : progress
-          ));
-        }
-      } catch {}
-    };
-    void sync();
-    const timer = window.setInterval(sync, 2_000);
-    return () => {
-      disposed = true;
-      window.clearInterval(timer);
-    };
-  }, [trackedCodexThreadIdsKey]);
 
   const tasksByStatus = useMemo(() => {
     return Object.fromEntries(
@@ -2186,18 +2100,13 @@ export function App() {
     const runningNativeThreadId = hostContext?.threadRunning
       ? hostContext.threadId ?? null
       : null;
-    const taskThreadId = normalizeCodexThreadId(task.threadId);
     return [task.id, taskCardPresentation(
       task,
-      aiThreads,
       unread,
       runningNativeThreadId,
       hostContext?.threadTodoProgress ?? null,
-      taskThreadId ? codexThreadProgress[taskThreadId] ?? null : undefined,
     )];
   })) as Record<string, TaskCardPresentation>, [
-    aiThreads,
-    codexThreadProgress,
     hostContext?.threadId,
     hostContext?.threadRunning,
     hostContext?.threadTodoProgress,
@@ -2799,13 +2708,7 @@ export function App() {
   }
 
   function openTaskConversation(conversation: TaskConversationItem) {
-    if (conversation.kind === "local-ai" && conversation.aiThreadId) {
-      setAiOpenThreadRequest((current) => ({
-        threadId: conversation.aiThreadId!,
-        requestId: (current?.requestId ?? 0) + 1,
-      }));
-      return;
-    }
+
     if (conversation.threadBinding) {
       openThread(conversation.threadBinding);
     } else if (conversation.legacyLocalThreadId) {
@@ -3311,17 +3214,7 @@ export function App() {
           <div ref={dragRegionRef} className="workspace-drag-region" aria-hidden="true" />
 
           <div className="header-actions">
-            {selectedProject && (
-              <ProjectAutomationMenu
-                automation={selectedProjectAutomation}
-                models={automationModels}
-                pending={automationPending || automationCatalogLoading}
-                error={automationCatalogError ?? automationError}
-                unavailableReason={automationProjectContext.unavailableReason}
-                onOpen={() => void reconcileProjectAutomation()}
-                onChange={(options) => void saveProjectAutomation(options)}
-              />
-            )}
+
             {isJiraProject && (
               <button
                 className="icon-button"
@@ -3530,32 +3423,12 @@ export function App() {
         ) : boardView !== "readme"
           && hasLoadedTasks
           && tasks.length === 0
-          && selectedProject
-          && aiImportReadyProjectId === selectedProject.id ? (
+          && selectedProject ? (
           <div className="page-empty">
             <h2>{text("当前项目还没有任务", "This project has no issues yet")}</h2>
-            <p>{text(
-              "让 Codex 检查当前项目目录对应的对话，并整理任务状态。",
-              "Ask Codex to inspect conversations for this project directory and organize their task status.",
-            )}</p>
             <div className="page-empty-actions">
               <button
                 className="button primary"
-                type="button"
-                onClick={() => setAiOpenThreadRequest((current) => ({
-                  projectId: selectedProject.id,
-                  issueId: null,
-                  composerText: text(
-                    "只检查当前项目目录对应的 Codex 对话。请将其中已完成、处理中和待执行的任务整理并导入当前项目的 Taskboard。",
-                    "Only inspect Codex conversations associated with this project directory. Organize completed, in-progress, and pending tasks, then import them into this project's Taskboard.",
-                  ),
-                  requestId: (current?.requestId ?? 0) + 1,
-                }))}
-              >
-                {text("导入当前项目任务状态", "Import current project task status")}
-              </button>
-              <button
-                className="button secondary"
                 type="button"
                 onClick={() => setEditor({ task: null, status: "todo" })}
               >
@@ -3987,17 +3860,7 @@ export function App() {
         />
       )}
 
-      {localAiChatAvailable && !isAllProjects && (
-        <Suspense fallback={null}>
-          <AiChat
-            available
-            projectId={selectedProjectId || null}
-            issueId={detailTaskId}
-            onThreadsChange={setAiThreads}
-            openThreadRequest={aiOpenThreadRequest}
-          />
-        </Suspense>
-      )}
+
 
       <div className="sr-only" role="status" aria-live="polite">{announcement}</div>
       {undoNotice && (

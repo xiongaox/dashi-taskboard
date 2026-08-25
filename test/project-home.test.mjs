@@ -25,12 +25,10 @@ test("each device stores an independent workspace path for every project", () =>
   assert.match(appSource, /const DEVICE_WORKSPACE_PATHS_KEY = "taskboard\.deviceWorkspacePaths\.v1"/);
   assert.match(appSource, /function readDeviceWorkspacePaths\(\)/);
   assert.match(appSource, /rememberDeviceWorkspacePath/);
-  assert.match(appSource, /const \[nextProjects, metadata, workspaces\] = await Promise\.all\(\[/);
-  assert.match(appSource, /listDeviceWorkspaces\(signal\)/);
+  assert.match(appSource, /const \[nextProjects, metadata\] = await Promise\.all\(\[/);
   assert.match(appSource, /const selectedDeviceWorkspacePath = selectedProjectId === GLOBAL_PROJECT_ID[\s\S]*?: deviceWorkspacePaths\[selectedProjectId\]/);
   assert.match(appSource, /listDevelopmentContexts\([\s\S]*?selectedDeviceWorkspacePath,[\s\S]*?\)/);
   assert.match(apiSource, /query\.set\("workspacePath", workspacePath\)/);
-  assert.match(apiSource, /\/api\/device-workspaces/);
 });
 
 test("imported Codex projects persist their exact device identity", () => {
@@ -93,7 +91,7 @@ test("issue creation selects a project only from all projects and keeps the curr
 test("the project header exposes project, automation, and create controls", () => {
   assert.match(appSource, /className="header-project-button"[\s\S]*?aria-haspopup="menu"/);
   assert.match(appSource, /className="header-project-menu" role="menu" aria-label=\{text\("项目", "Projects"\)\}/);
-  assert.match(appSource, /<ProjectAutomationMenu/);
+
   assert.match(appSource, /className="icon-button header-create-button"/);
   assert.match(styles, /\.header-project-menu \{[\s\S]*?-webkit-app-region: no-drag/);
 });

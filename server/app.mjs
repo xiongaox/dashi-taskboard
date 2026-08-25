@@ -16,10 +16,6 @@ import {
   isTaskPriority,
   isTaskStatus,
 } from "../shared/domain.mjs";
-import { resolveCodexExecutable } from "../shared/codex-executable.mjs";
-import { withoutTaskboardLauncherEnvironment } from "../shared/codex-environment.mjs";
-import { AiChatService } from "./ai-chat.mjs";
-import { resolveAiWorkspace, resolveMappedAiWorkspace } from "./ai-chat-catalog.mjs";
 import { decodeComposerReferenceKey } from "./composer-reference.mjs";
 import { createCloudConfigStore } from "./cloud-config.mjs";
 import {
@@ -30,7 +26,7 @@ import {
 import { ApiError, TaskboardDatabase } from "./database.mjs";
 import { createJiraConfigStore } from "./jira-config.mjs";
 import { createJiraIntegration } from "./jira-integration.mjs";
-import { ProjectSummaryService } from "./project-summary.mjs";
+
 
 const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const execFileAsync = promisify(execFile);
@@ -150,7 +146,8 @@ function isTrustedNetworkHost(hostname) {
       || octets[0] === 10
       || (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31)
       || (octets[0] === 192 && octets[1] === 168)
-      || (octets[0] === 169 && octets[1] === 254);
+      || (octets[0] === 169 && octets[1] === 254)
+      || (octets[0] === 198 && octets[1] === 18);
   }
   if (isIP(host) === 6) {
     return host.startsWith("fc")
@@ -466,49 +463,12 @@ function parseThreadBinding(value) {
   assertPlainObject(value);
   assertAllowedKeys(value, new Set([
     "threadId",
-    "codexProjectId",
-    "codexProjectKind",
-    "codexHostId",
-    "workspacePath",
   ]));
   const threadId = stringField(value.threadId, "threadBinding.threadId", {
     required: true,
     maxLength: 256,
   });
-  const identityFields = [
-    value.codexProjectId,
-    value.codexProjectKind,
-    value.codexHostId,
-    value.workspacePath,
-  ];
-  if (identityFields.every((field) => field === undefined)) return { threadId };
-  if (identityFields.some((field) => field === undefined)) {
-    throw new ApiError(400, "INVALID_FIELD", "Thread identity must include project, kind, host, and workspace");
-  }
-  const codexProjectId = stringField(value.codexProjectId, "threadBinding.codexProjectId", {
-    required: true,
-    maxLength: 256,
-  });
-  const codexProjectKind = value.codexProjectKind;
-  const codexHostId = stringField(value.codexHostId, "threadBinding.codexHostId", {
-    required: true,
-    maxLength: 256,
-  });
-  const workspacePath = stringField(value.workspacePath, "threadBinding.workspacePath", {
-    required: true,
-    maxLength: 4096,
-  });
-  if (codexProjectKind !== "local" && codexProjectKind !== "remote") {
-    throw new ApiError(400, "INVALID_FIELD", "threadBinding.codexProjectKind must be local or remote");
-  }
-  if (
-    (codexProjectKind === "local" && codexHostId !== "local")
-    || (codexProjectKind === "remote" && codexHostId === "local")
-    || workspacePath.includes("\0")
-  ) {
-    throw new ApiError(400, "INVALID_FIELD", "Thread project identity is invalid");
-  }
-  return { threadId, codexProjectId, codexProjectKind, codexHostId, workspacePath };
+  return { threadId };
 }
 
 function requestHeader(request, name) {
@@ -1180,49 +1140,6 @@ function parseComposerRebindRequest(value) {
   };
 }
 
-async function resolveComposerRebindWorkspace(aiChat, input) {
-  let thread;
-  if (input.threadId !== undefined) {
-    try {
-      thread = aiChat.getThread(input.threadId);
-    } catch (error) {
-      if (error instanceof ApiError && error.code === "AI_CHAT_THREAD_NOT_FOUND") {
-        throw new ApiError(400, "INVALID_COMPOSER_QUERY", "Composer thread does not exist");
-      }
-      throw error;
-    }
-    if (thread.origin.projectId !== input.projectId) {
-      throw new ApiError(
-        400,
-        "INVALID_COMPOSER_QUERY",
-        "Composer thread does not belong to the selected project",
-      );
-    }
-    try {
-      if (!(await stat(thread.origin.workspacePath)).isDirectory()) throw new Error("not a directory");
-    } catch {
-      throw new ApiError(
-        409,
-        "PROJECT_WORKSPACE_UNAVAILABLE",
-        "The conversation workspace is not available on this device",
-      );
-    }
-    return thread.origin.workspacePath;
-  }
-  let resolved;
-  try {
-    resolved = await aiChat.resolveContext(input.projectId, thread?.origin.issueId);
-  } catch (error) {
-    if (
-      error instanceof ApiError
-      && ["PROJECT_NOT_FOUND", "AI_CHAT_ISSUE_NOT_FOUND"].includes(error.code)
-    ) {
-      throw new ApiError(400, "INVALID_COMPOSER_QUERY", "Composer project is invalid");
-    }
-    throw error;
-  }
-  return resolved.workspacePath;
-}
 
 function parseComposerDocument(value) {
   assertPlainObject(value);
@@ -1421,61 +1338,7 @@ function methodNotAllowed(response, allowed) {
   }, { allow: allowed.join(", ") });
 }
 
-function codexProjectRoot(state, projectId) {
-  if (!projectId || !state || typeof state !== "object") return null;
-  const project = state["local-projects"]?.[projectId];
-  const root = Array.isArray(project?.rootPaths) ? project.rootPaths[0] : null;
-  return typeof root === "string" && root.trim() ? root : null;
-}
 
-async function readCodexProjectWorkspaces(codexStatePath) {
-  try {
-    const state = JSON.parse(await readFile(codexStatePath, "utf8"));
-    const projects = state["local-projects"];
-    if (!projects || typeof projects !== "object" || Array.isArray(projects)) return {};
-    return Object.fromEntries(Object.keys(projects).flatMap((projectId) => {
-      const root = codexProjectRoot(state, projectId);
-      return root ? [[projectId, root]] : [];
-    }));
-  } catch {
-    return {};
-  }
-}
-
-function latestThreadCwd(value, threadId) {
-  const matches = [];
-  const stack = [value];
-  while (stack.length > 0) {
-    const candidate = stack.pop();
-    if (!candidate || typeof candidate !== "object") continue;
-    if (candidate.conversationId === threadId && typeof candidate.cwd === "string" && candidate.cwd.trim()) {
-      matches.push(candidate);
-    }
-    stack.push(...(Array.isArray(candidate) ? candidate : Object.values(candidate)));
-  }
-  matches.sort((left, right) => Number(right.updatedAtMs ?? 0) - Number(left.updatedAtMs ?? 0));
-  return matches[0]?.cwd ?? null;
-}
-
-async function resolveProjectWorkspace(project, codexProjectId, codexThreadId, codexStatePath, codexProcessesPath) {
-  try {
-    const state = JSON.parse(await readFile(codexStatePath, "utf8"));
-    const assignment = state["thread-project-assignments"]?.[codexThreadId];
-    const root = codexProjectRoot(state, project.id)
-      ?? codexProjectRoot(state, codexProjectId)
-      ?? codexProjectRoot(state, assignment?.projectId)
-      ?? (typeof assignment?.cwd === "string" ? assignment.cwd : null);
-    if (root) return root;
-  } catch {}
-  if (project.workspacePath) return project.workspacePath;
-  if (!codexThreadId) return null;
-  try {
-    const processes = JSON.parse(await readFile(codexProcessesPath, "utf8"));
-    return latestThreadCwd(processes, codexThreadId);
-  } catch {
-    return null;
-  }
-}
 
 async function parseWorktrees(output) {
   const contexts = [];
@@ -1503,22 +1366,21 @@ async function parseWorktrees(output) {
 
 async function scanDevelopmentContexts(workspacePath, processEnv = process.env) {
   if (!workspacePath) return { workspacePath: null, contexts: [] };
-  const environment = withoutTaskboardLauncherEnvironment(processEnv);
   try {
     const rootResult = await execFileAsync("git", ["-C", workspacePath, "rev-parse", "--show-toplevel"], {
-      env: environment,
+      env: processEnv,
       timeout: 4_000,
       maxBuffer: 1024 * 1024,
     });
     const root = rootResult.stdout.trim();
     const [branchesResult, worktreesResult] = await Promise.all([
       execFileAsync("git", ["-C", root, "for-each-ref", "--format=%(refname:short)", "refs/heads"], {
-        env: environment,
+        env: processEnv,
         timeout: 4_000,
         maxBuffer: 1024 * 1024,
       }),
       execFileAsync("git", ["-C", root, "worktree", "list", "--porcelain"], {
-        env: environment,
+        env: processEnv,
         timeout: 4_000,
         maxBuffer: 1024 * 1024,
       }),
@@ -1541,7 +1403,6 @@ export function resolveServerOptions(options = {}) {
   const dataDirectory = configuredDataDirectory
     ? path.resolve(configuredDataDirectory)
     : path.join(PROJECT_ROOT, ".data");
-  const codexHome = process.env.CODEX_HOME || path.join(os.homedir(), ".codex");
   const instanceToken = String(
     options.instanceToken ?? process.env.CODEX_TASKBOARD_INSTANCE_TOKEN ?? "",
   ).trim();
@@ -1565,11 +1426,6 @@ export function resolveServerOptions(options = {}) {
     skillPath: options.skillPath
       ?? process.env.CODEX_TASKBOARD_SKILL_PATH
       ?? path.join(PROJECT_ROOT, "skills", "manage-taskboard", "SKILL.md"),
-    codexExecutable: resolveCodexExecutable({ explicit: options.codexExecutable }),
-    codexStatePath: options.codexStatePath
-      ?? path.join(codexHome, ".codex-global-state.json"),
-    codexProcessesPath: options.codexProcessesPath
-      ?? path.join(codexHome, "process_manager", "chat_processes.json"),
     instanceToken,
     instanceSecret,
     version: String(
@@ -1596,9 +1452,6 @@ export function resolveHost(value = process.env.CODEX_TASKBOARD_HOST ?? "0.0.0.0
 
 export function createTaskboardServer(options = {}) {
   const resolved = resolveServerOptions(options);
-  const codexProcessEnvironment = withoutTaskboardLauncherEnvironment(
-    options.processEnv ?? process.env,
-  );
   const routePrefix = resolved.instanceToken ? `/${resolved.instanceToken}` : "";
   const database = new TaskboardDatabase(resolved.databasePath);
   const events = new EventHub();
@@ -1611,7 +1464,7 @@ export function createTaskboardServer(options = {}) {
             const project = database.getProject(task.projectId);
             const cwd = project?.workspacePath || process.cwd();
             const prompt = `[$manage-taskboard](~/.gemini/config/skills/manage-taskboard/SKILL.md) 帮我处理议题 ${task.identifier}`;
-            const title = `${task.identifier}: ${task.title}`;
+            const title = task.title;
             const agentapi = os.homedir() + "/.gemini/antigravity/bin/agentapi" + (process.platform === "win32" ? ".bat" : "");
             const cmd = `"${agentapi}" new-conversation --title="${title.replace(/"/g, '\\"')}" "${prompt}"`;
             
@@ -1631,6 +1484,11 @@ export function createTaskboardServer(options = {}) {
                 } catch (e) {
                     console.error("Failed to discover Antigravity config", e);
                 }
+            }
+            if (!lsAddress || !csrfToken) {
+                console.error("[Antigravity] Missing Antigravity instance. Cannot auto-dispatch.");
+                events.emit("antigravity.missing", { task });
+                return;
             }
             
             const cleanEnv = Object.fromEntries(
@@ -1691,21 +1549,8 @@ export function createTaskboardServer(options = {}) {
   });
   let hostRuntime = null;
   function currentHostThreadBinding(threadId) {
-    if (
-      !hostRuntime
-      || hostRuntime.threadId !== threadId
-      || !hostRuntime.codexProjectId
-      || !hostRuntime.codexProjectKind
-      || !hostRuntime.codexHostId
-      || !hostRuntime.workspacePath
-    ) return undefined;
-    return {
-      threadId,
-      codexProjectId: hostRuntime.codexProjectId,
-      codexProjectKind: hostRuntime.codexProjectKind,
-      codexHostId: hostRuntime.codexHostId,
-      workspacePath: hostRuntime.workspacePath,
-    };
+    if (!hostRuntime || hostRuntime.threadId !== threadId) return undefined;
+    return { threadId };
   }
   function resolveInputThreadBinding(input) {
     if (input.threadBinding !== undefined) return input;
@@ -1721,7 +1566,7 @@ export function createTaskboardServer(options = {}) {
       const config = await cloudConfig.read();
       const workspacePath = config.projectMappings[projectId];
       if (!workspacePath) return null;
-      const result = await scanDevelopmentContexts(workspacePath, codexProcessEnvironment);
+      const result = await scanDevelopmentContexts(workspacePath, options.processEnv ?? process.env);
       return result.contexts.find((candidate) => (
         candidate.type === "worktree" && candidate.branch === context.branch
       )) ?? null;
@@ -1827,140 +1672,6 @@ export function createTaskboardServer(options = {}) {
     return { ...resolvedWorkspace, issue };
   }
 
-  const aiChat = new AiChatService({
-    database,
-    codexExecutable: resolved.codexExecutable,
-    codexStatePath: resolved.codexStatePath,
-    manageTaskboardSkillPath: resolved.skillPath,
-    processEnv: codexProcessEnvironment,
-    resolveContext: resolveAiChatContext,
-  });
-  const projectSummary = new ProjectSummaryService({
-    database,
-    codexExecutable: resolved.codexExecutable,
-    processEnv: codexProcessEnvironment,
-    workspacePath: PROJECT_ROOT,
-  });
-  const aiEventResponses = new Set();
-  const codexSessionSearches = new Map();
-  const codexSessionStateCache = new Map();
-  const codexSessionsDirectory = path.join(path.dirname(resolved.codexStatePath), "sessions");
-
-  async function findCodexSession(threadId) {
-    const cached = codexSessionSearches.get(threadId);
-    if (cached && (cached.path || Date.now() - cached.checkedAt < 5_000)) return cached.path;
-
-    const suffix = `-${threadId}.jsonl`;
-    const directories = [codexSessionsDirectory];
-    while (directories.length > 0) {
-      const directory = directories.pop();
-      let entries;
-      try {
-        entries = await readdir(directory, { withFileTypes: true });
-      } catch (error) {
-        if (error.code === "ENOENT") continue;
-        throw error;
-      }
-      for (const entry of entries) {
-        const entryPath = path.join(directory, entry.name);
-        if (entry.isDirectory()) {
-          directories.push(entryPath);
-        } else if (entry.isFile() && entry.name.endsWith(suffix)) {
-          codexSessionSearches.set(threadId, { path: entryPath, checkedAt: Date.now() });
-          return entryPath;
-        }
-      }
-    }
-
-    codexSessionSearches.set(threadId, { path: null, checkedAt: Date.now() });
-    return null;
-  }
-
-  async function readCodexSessionState(threadId) {
-    const sessionPath = await findCodexSession(threadId);
-    if (!sessionPath) return null;
-
-    const sessionStat = await stat(sessionPath);
-    const cached = codexSessionStateCache.get(sessionPath);
-    if (cached?.size === sessionStat.size && cached.mtimeMs === sessionStat.mtimeMs) {
-      return cached.state;
-    }
-
-    const length = Math.min(sessionStat.size, CODEX_PLAN_TAIL_BYTES);
-    const buffer = Buffer.alloc(length);
-    const handle = await open(sessionPath, "r");
-    try {
-      await handle.read(buffer, 0, length, sessionStat.size - length);
-    } finally {
-      await handle.close();
-    }
-
-    const lines = buffer.toString("utf8").split("\n");
-    if (length < sessionStat.size) lines.shift();
-    const records = [];
-    for (const line of lines) {
-      try {
-        records.push(JSON.parse(line));
-      } catch {}
-    }
-
-    let runningTurnId = null;
-    for (const record of records) {
-      const payload = record?.payload;
-      if (record?.type !== "event_msg" || typeof payload?.turn_id !== "string") continue;
-      if (payload.type === "task_started") runningTurnId = payload.turn_id;
-      if (
-        (payload.type === "task_complete" || payload.type === "turn_aborted")
-        && payload.turn_id === runningTurnId
-      ) {
-        runningTurnId = null;
-      }
-    }
-
-    let progress = null;
-    for (let index = records.length - 1; index >= 0; index -= 1) {
-      const record = records[index];
-      const payload = record?.payload;
-      if (payload?.type !== "custom_tool_call" || typeof payload.input !== "string") continue;
-
-      let statuses = [];
-      if (payload.name === "update_plan") {
-        try {
-          const input = JSON.parse(payload.input);
-          statuses = Array.isArray(input.plan)
-            ? input.plan.map((item) => item?.status).filter(Boolean)
-            : [];
-        } catch {}
-      } else if (payload.name === "exec") {
-        const callIndex = payload.input.lastIndexOf("tools.update_plan(");
-        if (callIndex < 0) continue;
-        statuses = [...payload.input.slice(callIndex).matchAll(
-          /["']?status["']?\s*:\s*["'](completed|in_progress|pending)["']/g,
-        )].map((match) => match[1]);
-      }
-
-      if (statuses.length > 0) {
-        progress = {
-          completed: statuses.filter((status) => status === "completed").length,
-          total: statuses.length,
-        };
-        break;
-      }
-    }
-
-    const state = {
-      completed: progress?.completed ?? null,
-      total: progress?.total ?? null,
-      running: runningTurnId !== null,
-    };
-    codexSessionStateCache.set(sessionPath, {
-      size: sessionStat.size,
-      mtimeMs: sessionStat.mtimeMs,
-      state,
-    });
-    return state;
-  }
-
   const server = createServer(async (request, response) => {
     response.setHeader("x-content-type-options", "nosniff");
     response.setHeader("referrer-policy", "no-referrer");
@@ -2020,7 +1731,6 @@ export function createTaskboardServer(options = {}) {
         assertLoopbackRequest(request);
       }
       const isMachineCapabilityRoute = pathname === "/api/meta"
-        || pathname === "/api/device-workspaces"
         || /^\/api\/projects\/[^/]+\/development-contexts$/.test(pathname);
       const capabilityCloudConfig = isMachineCapabilityRoute
         ? await cloudConfig.read()
@@ -2058,24 +1768,7 @@ export function createTaskboardServer(options = {}) {
         return methodNotAllowed(response, ["GET", "PATCH"]);
       }
 
-      if (pathname === "/api/local/codex-thread-progress") {
-        if (request.method !== "GET") return methodNotAllowed(response, ["GET"]);
-        if ([...url.searchParams.keys()].some((key) => key !== "threadId")) {
-          throw new ApiError(400, "UNKNOWN_QUERY_PARAMETER", "Only 'threadId' is supported");
-        }
-        const threadIds = [...new Set(url.searchParams.getAll("threadId").map((value) => (
-          value.trim().replace(/^(?:local|cloud):/i, "")
-        )))];
-        if (threadIds.length > 64 || threadIds.some((threadId) => (
-          !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(threadId)
-        ))) {
-          throw new ApiError(400, "INVALID_FIELD", "'threadId' must contain valid Codex thread IDs");
-        }
-        const entries = await Promise.all(threadIds.map(async (threadId) => (
-          [threadId, await readCodexSessionState(threadId)]
-        )));
-        return sendJson(response, 200, { progress: Object.fromEntries(entries) });
-      }
+
 
       if (pathname === "/api/local/host-runtime") {
         if (request.method === "GET") {
@@ -2091,10 +1784,6 @@ export function createTaskboardServer(options = {}) {
             "threadId",
             "threadRunning",
             "threadTodoProgress",
-            "codexProjectId",
-            "codexProjectKind",
-            "codexHostId",
-            "workspacePath",
           ]));
           const threadId = stringField(body.threadId, "threadId", { required: true, maxLength: 256 });
           if (typeof body.threadRunning !== "boolean") {
@@ -2114,21 +1803,6 @@ export function createTaskboardServer(options = {}) {
             threadId,
             threadRunning: body.threadRunning,
             threadTodoProgress,
-            codexProjectId: stringField(body.codexProjectId ?? null, "codexProjectId", {
-              nullable: true,
-              maxLength: 256,
-            }),
-            codexProjectKind: body.codexProjectKind === "local" || body.codexProjectKind === "remote"
-              ? body.codexProjectKind
-              : null,
-            codexHostId: stringField(body.codexHostId ?? null, "codexHostId", {
-              nullable: true,
-              maxLength: 256,
-            }),
-            workspacePath: stringField(body.workspacePath ?? null, "workspacePath", {
-              nullable: true,
-              maxLength: 4096,
-            }),
             updatedAt: Date.now(),
           };
           return sendJson(response, 200, { runtime: hostRuntime });
@@ -2273,157 +1947,6 @@ export function createTaskboardServer(options = {}) {
               localCapabilities: { available: true },
             }
             : {}),
-        });
-      }
-
-      if (pathname === "/api/local/ai/catalog") {
-        if (request.method !== "GET") return methodNotAllowed(response, ["GET"]);
-        assertAllowedQuery(url.searchParams, new Set(["projectId"]), "GET /api/local/ai/catalog");
-        const projectId = validateProjectId(url.searchParams.get("projectId") ?? undefined);
-        return sendJson(response, 200, await aiChat.getCatalog(projectId));
-      }
-
-      if (pathname === "/api/local/ai/composer/candidates") {
-        if (request.method !== "GET") return methodNotAllowed(response, ["GET"]);
-        const query = parseComposerCandidateQuery(url.searchParams);
-        return sendJson(
-          response,
-          200,
-          await aiChat.composerCatalog.candidatesForSurface(
-            await aiChat.getComposerCandidates(query),
-            query,
-          ),
-        );
-      }
-
-      if (pathname === "/api/local/ai/composer/rebind") {
-        if (request.method !== "POST") return methodNotAllowed(response, ["POST"]);
-        assertNoQuery(url.searchParams, "POST /api/local/ai/composer/rebind");
-        const input = parseComposerRebindRequest(await readJson(request));
-        const workspacePath = await resolveComposerRebindWorkspace(aiChat, input);
-        return sendJson(
-          response,
-          200,
-          await aiChat.composerCatalog.rebindPersistedReferences({
-            workspacePath,
-            nodes: input.document.nodes,
-          }),
-        );
-      }
-
-      const projectSummaryRoute = pathname.match(/^\/api\/local\/projects\/([^/]+)\/summary$/);
-      if (projectSummaryRoute) {
-        if (request.method !== "GET") return methodNotAllowed(response, ["GET"]);
-        assertNoQuery(url.searchParams, "GET /api/local/projects/:id/summary");
-        const projectId = validateProjectId(
-          decodeRouteSegment(projectSummaryRoute[1], "Project id"),
-        );
-        return sendJson(response, 200, projectSummary.get(projectId));
-      }
-
-      if (pathname === "/api/local/ai/threads") {
-        assertNoQuery(url.searchParams, "/api/local/ai/threads");
-        if (request.method === "GET") {
-          return sendJson(response, 200, { threads: await aiChat.listThreads() });
-        }
-        if (request.method === "POST") {
-          const thread = await aiChat.createThread(parseAiThreadCreate(await readJson(request)));
-          return sendJson(response, 201, { thread });
-        }
-        return methodNotAllowed(response, ["GET", "POST"]);
-      }
-
-      const aiThreadEventsRoute = pathname.match(/^\/api\/local\/ai\/threads\/([^/]+)\/events$/);
-      if (aiThreadEventsRoute) {
-        if (request.method !== "GET") return methodNotAllowed(response, ["GET"]);
-        assertNoQuery(url.searchParams, "GET /api/local/ai/threads/:id/events");
-        const threadId = decodeRouteSegment(aiThreadEventsRoute[1], "Thread id");
-        await aiChat.getThreadSnapshot(threadId);
-        response.writeHead(200, {
-          connection: "keep-alive",
-          "cache-control": "no-cache, no-transform",
-          "content-type": "text/event-stream; charset=utf-8",
-          "x-accel-buffering": "no",
-        });
-        aiEventResponses.add(response);
-        const unsubscribe = aiChat.subscribe(threadId, (event) => {
-          const type = event?.type === "ai.run" ? "ai.run" : "ai.event";
-          response.write(`event: ${type}\ndata: ${JSON.stringify(event)}\n\n`);
-        });
-        response.write(": connected\n\n");
-        response.write('event: ai.event\ndata: {"type":"ai.event"}\n\n');
-        const keepAlive = setInterval(() => response.write(": keep-alive\n\n"), 20_000);
-        keepAlive.unref();
-        request.once("close", () => {
-          clearInterval(keepAlive);
-          unsubscribe();
-          aiEventResponses.delete(response);
-        });
-        return;
-      }
-
-      const aiThreadTurnRoute = pathname.match(/^\/api\/local\/ai\/threads\/([^/]+)\/turns$/);
-      if (aiThreadTurnRoute) {
-        if (request.method !== "POST") return methodNotAllowed(response, ["POST"]);
-        assertNoQuery(url.searchParams, "POST /api/local/ai/threads/:id/turns");
-        const threadId = decodeRouteSegment(aiThreadTurnRoute[1], "Thread id");
-        const run = await aiChat.startTurn(
-          threadId,
-          parseAiTurn(await readJson(
-            request,
-            AI_CHAT_TURN_BODY_LIMIT,
-            "AI chat turn body cannot exceed 25 MiB",
-          )),
-        );
-        return sendJson(response, 202, { run });
-      }
-
-      const aiThreadCompactRoute = pathname.match(/^\/api\/local\/ai\/threads\/([^/]+)\/compact$/);
-      if (aiThreadCompactRoute) {
-        if (request.method !== "POST") return methodNotAllowed(response, ["POST"]);
-        assertNoQuery(url.searchParams, "POST /api/local/ai/threads/:id/compact");
-        const threadId = decodeRouteSegment(aiThreadCompactRoute[1], "Thread id");
-        await assertEmptyRequestBody(request, "POST /api/local/ai/threads/:id/compact");
-        const thread = await aiChat.compactThread(threadId);
-        return sendJson(response, 200, { thread });
-      }
-
-      const aiThreadRoute = pathname.match(/^\/api\/local\/ai\/threads\/([^/]+)$/);
-      if (aiThreadRoute) {
-        assertNoQuery(url.searchParams, "/api/local/ai/threads/:id");
-        const threadId = decodeRouteSegment(aiThreadRoute[1], "Thread id");
-        if (request.method === "GET") {
-          return sendJson(response, 200, await aiChat.getThreadSnapshot(threadId));
-        }
-        if (request.method === "PATCH") {
-          const thread = await aiChat.updateThread(threadId, parseAiThreadPatch(await readJson(request)));
-          return sendJson(response, 200, { thread });
-        }
-        if (request.method === "DELETE") {
-          await assertEmptyRequestBody(request, "DELETE /api/local/ai/threads/:id");
-          await aiChat.deleteThread(threadId);
-          return sendEmpty(response, 204);
-        }
-        return methodNotAllowed(response, ["GET", "PATCH", "DELETE"]);
-      }
-
-      const aiInterruptRoute = pathname.match(/^\/api\/local\/ai\/runs\/([^/]+)\/interrupt$/);
-      if (aiInterruptRoute) {
-        if (request.method !== "POST") return methodNotAllowed(response, ["POST"]);
-        assertNoQuery(url.searchParams, "POST /api/local/ai/runs/:id/interrupt");
-        const runId = decodeRouteSegment(aiInterruptRoute[1], "Run id");
-        await assertEmptyRequestBody(request, "POST /api/local/ai/runs/:id/interrupt");
-        const run = await aiChat.interrupt(runId);
-        return sendJson(response, 200, { run });
-      }
-
-      if (pathname === "/api/device-workspaces") {
-        if (request.method !== "GET") return methodNotAllowed(response, ["GET"]);
-        if ([...url.searchParams.keys()].length > 0) {
-          throw new ApiError(400, "UNKNOWN_QUERY_PARAMETER", "GET /api/device-workspaces does not accept query parameters");
-        }
-        return sendJson(response, 200, {
-          workspaces: await readCodexProjectWorkspaces(resolved.codexStatePath),
         });
       }
 
@@ -2606,14 +2129,6 @@ export function createTaskboardServer(options = {}) {
           }
           : database.getProject(projectId);
         if (!project) throw new ApiError(404, "PROJECT_NOT_FOUND", `Project '${projectId}' does not exist`);
-        const codexProjectId = stringField(url.searchParams.get("codexProjectId") ?? null, "codexProjectId", {
-          nullable: true,
-          maxLength: 128,
-        });
-        const codexThreadId = stringField(url.searchParams.get("codexThreadId") ?? null, "codexThreadId", {
-          nullable: true,
-          maxLength: 256,
-        });
         const deviceWorkspacePath = stringField(
           url.searchParams.get("workspacePath") ?? null,
           "workspacePath",
@@ -2622,17 +2137,11 @@ export function createTaskboardServer(options = {}) {
         if (deviceWorkspacePath?.includes("\0")) {
           throw new ApiError(400, "INVALID_FIELD", "'workspacePath' cannot contain null bytes");
         }
-        const workspacePath = deviceWorkspacePath ?? await resolveProjectWorkspace(
-          project,
-          codexProjectId,
-          codexThreadId,
-          resolved.codexStatePath,
-          resolved.codexProcessesPath,
-        );
+        const workspacePath = deviceWorkspacePath ?? project.workspacePath;
         return sendJson(
           response,
           200,
-          await scanDevelopmentContexts(workspacePath, codexProcessEnvironment),
+          await scanDevelopmentContexts(workspacePath, options.processEnv ?? process.env),
         );
       }
 
@@ -3190,7 +2699,6 @@ export function createTaskboardServer(options = {}) {
   let listening = false;
   return {
     database,
-    aiChat,
     server,
     options: resolved,
     async listen({ host = "127.0.0.1", port = resolvePort(), fd = null } = {}) {
@@ -3224,10 +2732,8 @@ export function createTaskboardServer(options = {}) {
           })
         : Promise.resolve();
       events.close();
-      for (const response of aiEventResponses) response.end();
-      aiEventResponses.clear();
-      await aiChat.close();
-      await projectSummary.close();
+
+
       await serverClosed;
       listening = false;
       database.close();
