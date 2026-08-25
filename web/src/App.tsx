@@ -2739,7 +2739,7 @@ export function App() {
       ));
       return;
     }
-    window.location.assign(`codex://threads/${encodeURIComponent(binding.threadId.trim())}`);
+    window.location.assign(`antigravity://threads/${encodeURIComponent(binding.threadId.trim())}`);
   }
 
   function openLegacyLocalThread(threadId: string) {
@@ -2750,7 +2750,7 @@ export function App() {
       });
       return;
     }
-    window.location.assign(`codex://threads/${encodeURIComponent(threadId.trim())}`);
+    window.location.assign(`antigravity://threads/${encodeURIComponent(threadId.trim())}`);
   }
 
   function openTaskConversation(conversation: TaskConversationItem) {
@@ -2892,7 +2892,7 @@ export function App() {
         ));
         return;
       }
-      const deepLink = new URL("codex://threads/new");
+      const deepLink = new URL("antigravity://threads/new");
       if (workspacePath) deepLink.searchParams.set("path", workspacePath);
       deepLink.searchParams.set("prompt", embeddedInstruction);
       window.location.assign(deepLink.toString());

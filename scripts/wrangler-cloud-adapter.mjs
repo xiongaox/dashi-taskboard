@@ -43,7 +43,12 @@ export function createWranglerCloudAdapters({
   bucket = "codex-taskboard-attachments",
   preparedImportSql,
   environment = process.env,
-  runCommand = execFile,
+  runCommand = (executable, args, options = {}) => {
+    return execFile(executable, args, {
+      ...options,
+      env: { ...process.env, ...options.env, CI: "1", WRANGLER_SEND_METRICS: "false" }
+    });
+  },
 } = {}) {
   const remoteEnabled = environment.TASKBOARD_MIGRATION_REMOTE === "1";
   const useRemote = remote ?? remoteEnabled;
