@@ -13,7 +13,6 @@
     "dev": "node scripts/dev.mjs",
     "dev:server": "node --watch server/index.mjs --dev",
     "dev:web": "vite --config web/vite.config.ts",
-    "dev:cloud": "npm run build:web && wrangler dev --local",
     "build": "vite build --config web/vite.config.ts",
     "build:web": "vite build --config web/vite.config.ts",
     "typecheck": "tsc -p web/tsconfig.json --noEmit",
@@ -21,12 +20,6 @@
     "taskctl": "node cli/taskctl.mjs",
     "test": "node --test && npm run test:components",
     "test:components": "vitest run web/src/components/MarkdownDocument.test.tsx --environment jsdom",
-    "test:cloud": "node --test test/cloud-shared-worker.test.mjs",
-    "cloud:migrate:local": "wrangler d1 migrations apply antigravity-taskboard-db --local",
-    "cloud:migrate": "wrangler d1 migrations apply antigravity-taskboard-db --remote",
-    "cloud:deploy:dry-run": "npm run build:web && wrangler deploy --dry-run",
-    "cloud:deploy": "npm run build:web && wrangler deploy",
-    "cloud:data": "node scripts/migrate-to-cloud.mjs",
     "check": "npm run typecheck && npm run build && npm test"
   },
   "dependencies": {
@@ -53,11 +46,9 @@
     "@vitejs/plugin-react": "^6.0.3",
     "@testing-library/react": "^16.3.2",
     "jsdom": "^27.4.0",
-    "miniflare": "^4.20260722.0",
     "typescript": "^7.0.2",
     "vite": "^8.1.5",
-    "vitest": "^4.1.10",
-    "wrangler": "^4.120.0"
+    "vitest": "^4.1.10"
   },
   "overrides": {
     "undici": "7.29.0"
