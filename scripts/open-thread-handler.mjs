@@ -1,5 +1,9 @@
-﻿import WebSocket from "ws";
-import { execSync } from "node:child_process";
+import WebSocket from "ws";
+import { execSync, spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const rawArg = process.argv[2] || "";
 const match = rawArg.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
@@ -82,7 +86,22 @@ async function main() {
     });
   }
 
-  // Bring Antigravity window to the foreground
+  // Bring Antigravity window to the foreground with Win32 API focus
+  try {
+    const psScript = path.join(__dirname, "activate-antigravity.ps1");
+    spawnSync("powershell", [
+      "-NoProfile",
+      "-NonInteractive",
+      "-WindowStyle",
+      "Hidden",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      psScript,
+    ], { stdio: "ignore" });
+  } catch {}
+
+  // Fallback to WScript.Shell AppActivate
   try {
     execSync(`powershell -NoProfile -Command "$wshell = New-Object -ComObject WScript.Shell; $wshell.AppActivate('Antigravity')"`, {
       stdio: "ignore",
