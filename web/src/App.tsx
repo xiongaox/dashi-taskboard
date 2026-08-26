@@ -3254,14 +3254,14 @@ export function App() {
                             role="menuitemradio"
                             aria-checked={project.id === selectedProjectId}
                             disabled={openingProjectId !== null}
-                            onContextMenu={project.id.startsWith("temp-") ? (event) => {
+                            onContextMenu={(event) => {
                               event.preventDefault();
                               setProjectContextMenu({
                                 project,
                                 x: event.clientX,
                                 y: event.clientY,
                               });
-                            } : undefined}
+                            }}
                             onClick={() => {
                               if (project.id === selectedProjectId) setProjectMenuOpen(false);
                               else void selectProject(project);

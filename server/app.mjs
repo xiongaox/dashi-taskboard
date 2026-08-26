@@ -1436,7 +1436,7 @@ async function scanDevelopmentContexts(workspacePath, processEnv = process.env) 
     });
     const root = rootResult.stdout.trim();
     const [branchesResult, worktreesResult] = await Promise.all([
-      execFileAsync("git", ["-C", root, "for-each-ref", "--format=%(refname:short)", "refs/heads"], {
+      execFileAsync("git", ["-C", root, "for-each-ref", "--format=%(refname:short)", "refs/heads", "refs/remotes"], {
         env: processEnv,
         timeout: 4_000,
         maxBuffer: 1024 * 1024,
@@ -1447,7 +1447,14 @@ async function scanDevelopmentContexts(workspacePath, processEnv = process.env) 
         maxBuffer: 1024 * 1024,
       }),
     ]);
-    const branches = branchesResult.stdout.split("\n").map((branch) => branch.trim()).filter(Boolean);
+    const rawRefs = branchesResult.stdout.split("\n").map((branch) => branch.trim()).filter(Boolean);
+    const branchSet = new Set();
+    for (const ref of rawRefs) {
+      if (ref === "origin" || ref.endsWith("/HEAD") || ref.includes("HEAD")) continue;
+      const cleanBranch = ref.startsWith("origin/") ? ref.slice(7) : ref;
+      if (cleanBranch) branchSet.add(cleanBranch);
+    }
+    const branches = Array.from(branchSet);
     return {
       workspacePath: root,
       contexts: [
@@ -1514,11 +1521,66 @@ export function resolveHost(value = process.env.CODEX_TASKBOARD_HOST ?? "0.0.0.0
   return host;
 }
 
+async function syncAntigravityProjects(database) {
+  try {
+    const projectsDir = path.join(os.homedir(), ".gemini", "config", "projects");
+    let fileNames = [];
+    try {
+      fileNames = await readdir(projectsDir);
+    } catch {
+      return;
+    }
+    const jsonFiles = fileNames.filter((f) => f.endsWith(".json") && f !== "outside-of-project.json");
+    for (const file of jsonFiles) {
+      try {
+        const raw = await readFile(path.join(projectsDir, file), "utf8");
+        const content = JSON.parse(raw);
+        const name = content.name;
+        if (!name || name === "涓存椂浼氳瘽" || name === "临时会话") continue;
+        let workspacePath = null;
+        const resources = content.projectResources?.resources || [];
+        for (const r of resources) {
+          const rawUri = r.folderUri || r.gitFolder?.folderUri;
+          if (rawUri) {
+            let decoded = decodeURIComponent(rawUri).replace(/^file:\/+/i, "").replace(/\\/g, "/");
+            if (/^[a-zA-Z]:/.test(decoded)) {
+              decoded = decoded[0].toUpperCase() + decoded.slice(1);
+            }
+            workspacePath = decoded;
+            break;
+          }
+        }
+        if (!workspacePath) continue;
+
+        const existing = database.database.prepare(
+          "SELECT id, name, workspace_path FROM projects WHERE name = ? OR id = ?"
+        ).get(name, content.id);
+
+        if (existing) {
+          if (!existing.workspace_path || existing.workspace_path !== workspacePath) {
+            database.database.prepare(
+              "UPDATE projects SET workspace_path = ?, updated_at = ? WHERE id = ?"
+            ).run(workspacePath, new Date().toISOString(), existing.id);
+          }
+        } else {
+          const id = content.id || name.toLowerCase().replace(/[^a-z0-9-_]/g, "-");
+          database.createProject({
+            id,
+            name,
+            workspacePath,
+          });
+        }
+      } catch {}
+    }
+  } catch {}
+}
+
 export function createTaskboardServer(options = {}) {
   const resolved = resolveServerOptions(options);
   const routePrefix = resolved.instanceToken ? `/${resolved.instanceToken}` : "";
   const database = new TaskboardDatabase(resolved.databasePath);
   const events = new EventHub();
+  syncAntigravityProjects(database);
 
   events.on("task.moved", async ({ task }) => {
     if (task.status === "in_progress" && !task.threadId) {
@@ -2061,6 +2123,7 @@ export function createTaskboardServer(options = {}) {
           if ([...url.searchParams.keys()].length > 0) {
             throw new ApiError(400, "UNKNOWN_QUERY_PARAMETER", "GET /api/projects does not accept query parameters");
           }
+          await syncAntigravityProjects(database);
           const projects = database.listProjects().map((project) => ({
             ...project,
             workspacePath: project.id === DEFAULT_PROJECT_ID

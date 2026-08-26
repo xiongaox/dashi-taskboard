@@ -1329,9 +1329,6 @@ export class TaskboardDatabase {
     if (!project) {
       throw new ApiError(404, "PROJECT_NOT_FOUND", `Project '${id}' does not exist`);
     }
-    if (!id.startsWith("temp-")) {
-      throw new ApiError(403, "PROJECT_DELETE_FORBIDDEN", "Only manually created projects can be deleted");
-    }
     const result = this.database.prepare(`
       DELETE FROM projects
       WHERE id = ?
