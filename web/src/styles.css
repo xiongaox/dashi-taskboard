@@ -782,8 +782,12 @@ kbd {
   z-index: 50;
   top: 33px;
   left: -4px;
+  display: flex;
+  flex-direction: column;
   width: min(240px, calc(100vw - 24px));
+  max-height: min(480px, calc(100vh - 56px));
   padding: 5px;
+  overflow: hidden;
   border: var(--border-hairline) solid var(--border-strong);
   border-radius: 9px;
   background: var(--surface-raised);
@@ -799,7 +803,62 @@ kbd {
   font-weight: 550;
 }
 
-.header-project-menu button {
+.project-menu-search {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  height: 32px;
+  margin: 0 2px 5px;
+}
+
+.project-menu-search .taskboard-icon {
+  position: absolute;
+  left: 8px;
+  width: 13px;
+  height: 13px;
+  pointer-events: none;
+}
+
+.project-menu-search input {
+  width: 100%;
+  height: 100%;
+  padding: 0 27px;
+  border: var(--border-hairline) solid var(--border);
+  border-radius: 6px;
+  outline: 0;
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 11px;
+}
+
+.project-menu-search input:focus {
+  border-color: var(--border-strong);
+}
+
+.project-menu-search input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.project-menu-list {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.project-menu-actions {
+  flex: 0 0 auto;
+}
+
+.project-menu-empty {
+  padding: 10px 7px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
+.header-project-menu button:not(.search-clear) {
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr) auto auto;
   align-items: center;
@@ -815,13 +874,13 @@ kbd {
   text-align: left;
 }
 
-.header-project-menu button:hover:not(:disabled),
-.header-project-menu button:focus-visible {
+.header-project-menu button:not(.search-clear):hover:not(:disabled),
+.header-project-menu button:not(.search-clear):focus-visible {
   background: var(--surface-hover);
   outline: none;
 }
 
-.header-project-menu button > span:nth-child(2) {
+.header-project-menu button:not(.search-clear) > span:nth-child(2) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1073,7 +1132,8 @@ kbd {
   color: var(--text-tertiary);
 }
 
-.search-field input::-webkit-search-cancel-button {
+.search-field input::-webkit-search-cancel-button,
+.project-menu-search input::-webkit-search-cancel-button {
   appearance: none;
 }
 
@@ -1346,7 +1406,6 @@ kbd {
 
 .display-settings-footer {
   flex: 0 0 auto;
-  justify-content: space-between;
   gap: 8px;
   padding: 12px 18px;
   border-top: var(--border-hairline) solid var(--border);
@@ -2901,6 +2960,10 @@ kbd {
   margin: 0 0 10px;
 }
 
+.issue-description-document .markdown-blank-line {
+  height: 1lh;
+}
+
 .issue-description-document h1,
 .issue-description-document h2,
 .issue-description-document h3,
@@ -3166,6 +3229,10 @@ kbd {
   margin: 10px 0;
   border-radius: 8px;
   object-fit: contain;
+}
+
+.issue-description-document img[src*="/api/attachments/"] + br {
+  display: none;
 }
 
 .issue-conversation-list {
@@ -3603,6 +3670,10 @@ kbd {
 
 .issue-attachment-controls .attachment-add-button {
   margin-left: auto;
+}
+
+.issue-attachment-controls {
+  margin-top: 18px;
 }
 
 .attachments-heading > div {
@@ -4531,13 +4602,6 @@ kbd {
 .detail-open-thread-action svg {
   width: 16px;
   height: 16px;
-}
-
-.detail-thread-avatar {
-  width: 16px;
-  height: 16px;
-  border: 0;
-  font-size: 7px;
 }
 
 .detail-copy-action {
@@ -6059,6 +6123,14 @@ kbd {
   width: 207px;
   max-height: min(402px, calc(100vh - 16px));
   padding: 6px;
+}
+
+.development-context-popover {
+  width: min(360px, calc(100vw - 16px));
+}
+
+.development-context-popover .task-property-option {
+  min-height: 32px;
 }
 
 .task-property-options {
