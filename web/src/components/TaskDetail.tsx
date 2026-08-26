@@ -369,7 +369,7 @@ function ConversationLink({
         title={text("复制终端命令", "Copy terminal command")}
         onClick={() => onCopy(
           `codex resume ${threadId}`,
-          text("Codex 恢复命令已复制。", "Codex resume command copied."),
+          text("Antigravity 恢复命令已复制。", "Antigravity resume command copied."),
         )}
       >
         <CodexResumeIcon />

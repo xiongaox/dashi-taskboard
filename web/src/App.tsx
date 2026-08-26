@@ -871,7 +871,7 @@ export function App() {
     unavailableReason: string | null;
   }>(() => {
     if (!embedded || window.parent === window) {
-      return { unavailableReason: text("仅可在 Codex App 中使用", "Available only in the Codex app") };
+      return { unavailableReason: text("仅可在 Antigravity App 中使用", "Available only in the Antigravity app") };
     }
     if (!isLocalTaskboardOrigin(new URL(document.baseURI).origin)) {
       return { unavailableReason: text("仅本地任务面板可用", "Available only on the local taskboard") };
@@ -931,8 +931,8 @@ export function App() {
 
     if (!workspacePath || !codexProjectId) {
       return { unavailableReason: text(
-        "请先在 Codex 中添加并映射该项目目录",
-        "Add and map this project directory in Codex first",
+        "请先在 Antigravity 中添加并映射该项目目录",
+        "Add and map this project directory in Antigravity first",
       ) };
     }
     if (!manageTaskboardSkillPath) {
@@ -1182,8 +1182,8 @@ export function App() {
       const timeoutId = window.setTimeout(() => {
         pendingAutomationRequestsRef.current.delete(requestId);
         reject(new Error(textRef.current(
-          "Codex 自动化没有响应，请稍后重试",
-          "Codex automation did not respond. Try again later.",
+          "Antigravity 自动化没有响应，请稍后重试",
+          "Antigravity automation did not respond. Try again later.",
         )));
       }, 10_000);
       pendingAutomationRequestsRef.current.set(requestId, { resolve, reject, timeoutId });
@@ -1237,8 +1237,8 @@ export function App() {
         const policy = isAutomationHostPolicy(response.policy) ? response.policy : null;
         if (!policy) {
           throw new Error(textRef.current(
-            "Codex 没有返回实际生效的自动化策略",
-            "Codex did not return the effective automation policy.",
+            "Antigravity 没有返回实际生效的自动化策略",
+            "Antigravity did not return the effective automation policy.",
           ));
         }
         writeProjectAutomation(queuedSave.projectId, {
@@ -1628,7 +1628,7 @@ export function App() {
         else pending.reject(new Error(
           typeof payload.error === "string"
             ? payload.error
-            : textRef.current("Codex 无法更新自动化", "Codex could not update automation"),
+            : textRef.current("Antigravity 无法更新自动化", "Antigravity could not update automation"),
         ));
         return;
       }
@@ -1648,7 +1648,7 @@ export function App() {
         setOpeningThreadTaskId(null);
         setActionError(typeof payload.error === "string"
           ? payload.error
-          : textRef.current("无法在 Codex 中打开新对话。", "Could not open a new conversation in Codex."));
+          : textRef.current("无法在 Antigravity 中打开新对话。", "Could not open a new conversation in Antigravity."));
         return;
       }
 
@@ -1656,7 +1656,7 @@ export function App() {
         const payload = message.payload as { error?: unknown };
         setActionError(typeof payload.error === "string"
           ? payload.error
-          : textRef.current("无法打开 Codex 对话。", "Could not open the Codex conversation."));
+          : textRef.current("无法打开 Antigravity 对话。", "Could not open the Antigravity conversation."));
         return;
       }
 
@@ -2746,8 +2746,8 @@ export function App() {
 
     if (binding.codexProjectKind === "remote") {
       setActionError(text(
-        "请在 Codex App 中打开该 SSH 远程对话。",
-        "Open this SSH remote conversation in the Codex app.",
+        "请在 Antigravity App 中打开该 SSH 远程对话。",
+        "Open this SSH remote conversation in the Antigravity app.",
       ));
       return;
     }
@@ -2902,8 +2902,8 @@ export function App() {
     if (standalone) {
       if (codexProjectContext?.codexProjectKind === "remote") {
         setActionError(text(
-          "请在 Codex App 中打开该 SSH 远程项目的新对话。",
-          "Open the new SSH remote project conversation in the Codex app.",
+          "请在 Antigravity App 中打开该 SSH 远程项目的新对话。",
+          "Open the new SSH remote project conversation in the Antigravity app.",
         ));
         return;
       }
@@ -3174,7 +3174,7 @@ export function App() {
                 <button
                   className="detail-back-button codex-sidebar-expand-button"
                   type="button"
-                  aria-label={text("展开 Codex 侧边栏", "Expand Codex sidebar")}
+                  aria-label={text("展开 Antigravity 侧边栏", "Expand Antigravity sidebar")}
                   title={text("展开侧边栏", "Expand sidebar")}
                   onClick={expandCodexSidebar}
                 >

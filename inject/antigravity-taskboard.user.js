@@ -878,8 +878,8 @@
     }
     if (!row) {
       throw new Error(hostText(
-        "Codex 中找不到精确的 SSH 远程项目",
-        "The exact SSH remote project is not available in Codex",
+        "Antigravity 中找不到精确的 SSH 远程项目",
+        "The exact SSH remote project is not available in Antigravity",
       ));
     }
     if (row.getAttribute("data-app-action-sidebar-project-collapsed") === "true") {
@@ -889,8 +889,8 @@
     const selectProject = row.querySelector("[data-app-action-sidebar-select-project]");
     if (!selectProject) {
       throw new Error(hostText(
-        "Codex 中找不到对应的 SSH 远程项目",
-        "The SSH remote project is not available in Codex",
+        "Antigravity 中找不到对应的 SSH 远程项目",
+        "The SSH remote project is not available in Antigravity",
       ));
     }
     selectProject.click?.();
@@ -913,8 +913,8 @@
       await new Promise((resolve) => window.setTimeout(resolve, 80));
     }
     throw new Error(hostText(
-      "Codex 没有确认目标 SSH 远程项目和主机",
-      "Codex did not confirm the target SSH remote project and host",
+      "Antigravity 没有确认目标 SSH 远程项目和主机",
+      "Antigravity did not confirm the target SSH remote project and host",
     ));
   }
 
@@ -961,7 +961,7 @@
           payload: {
             error: error instanceof Error
               ? error.message
-              : hostText("无法打开 Codex 对话", "Could not open the Codex conversation"),
+              : hostText("无法打开 Antigravity 对话", "Could not open the Antigravity conversation"),
           },
         });
       }
@@ -1042,8 +1042,8 @@
       await new Promise((resolve) => window.setTimeout(resolve, 80));
     }
     throw new Error(hostText(
-      "Codex 未在限定时间内切换到目标项目或 worktree",
-      "Codex did not switch to the target project or worktree in time",
+      "Antigravity 未在限定时间内切换到目标项目或 worktree",
+      "Antigravity did not switch to the target project or worktree in time",
     ));
   }
 
@@ -1072,8 +1072,8 @@
       const bridge = window.electronBridge;
       if (!bridge || typeof bridge.sendMessageFromView !== "function") {
         throw new Error(hostText(
-          "当前 Codex 版本没有提供原生对话导航能力",
-          "This Codex version does not provide native conversation navigation",
+          "当前 Antigravity 版本没有提供原生对话导航能力",
+          "This Antigravity version does not provide native conversation navigation",
         ));
       }
 
@@ -1089,8 +1089,8 @@
         const target = await resolveNativeProject(requestedProjectId, workspacePath);
         if (!target) {
           throw new Error(hostText(
-            "Codex 中没有映射目标项目或 worktree",
-            "The target project or worktree is not mapped in Codex",
+            "Antigravity 中没有映射目标项目或 worktree",
+            "The target project or worktree is not mapped in Antigravity",
           ));
         }
         const { targetRoot } = target;
@@ -1120,7 +1120,7 @@
           taskId,
           error: error instanceof Error
             ? error.message
-            : hostText("无法创建 Codex 对话", "Could not create the Codex conversation"),
+            : hostText("无法创建 Antigravity 对话", "Could not create the Antigravity conversation"),
         },
       });
     } finally {
@@ -1189,7 +1189,7 @@
           ok: false,
           error: error instanceof Error
             ? error.message
-            : hostText("Codex 自动任务操作失败", "The Codex automation operation failed"),
+            : hostText("Antigravity 自动任务操作失败", "The Antigravity automation operation failed"),
         },
       });
     }
@@ -1502,8 +1502,8 @@
   function requestHost(action, payload = {}, timeoutMs = HOST_REQUEST_TIMEOUT_MS) {
     if (!hasLiveHostBinding()) {
       return Promise.reject(hostError(
-        "Taskboard 启动器未运行，无法操作 Codex 对话输入框",
-        "The Taskboard launcher is not running, so the Codex composer is unavailable",
+        "Taskboard 启动器未运行，无法操作 Antigravity 对话输入框",
+        "The Taskboard launcher is not running, so the Antigravity composer is unavailable",
       ));
     }
 

@@ -54,7 +54,7 @@ const TRUSTED_ORIGINS_ENV = "CODEX_TASKBOARD_TRUSTED_ORIGINS";
 const CODEX_AGENT_ACTOR = {
   type: "agent",
   id: "codex-agent",
-  name: "Codex Agent",
+  name: "Antigravity Agent",
   avatarUrl: null,
 };
 const CONTENT_TYPES = new Map([
