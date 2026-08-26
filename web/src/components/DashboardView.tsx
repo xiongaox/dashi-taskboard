@@ -518,7 +518,7 @@ export function DashboardView({
                 aria-label={summaryReady ? summary : text("Antigravity 正在整理项目总结", "Antigravity is preparing the project summary")}
               >{displayedSummary}</p>
             </div>
-            <img className="dashboard-codex-mark" src="codex-agent-logo.png" alt="" aria-hidden="true" />
+            <img className="dashboard-codex-mark" src="antigravity-agent-logo.png" alt="" aria-hidden="true" />
           </section>
         </div>
 

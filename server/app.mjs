@@ -53,7 +53,7 @@ const TRUSTED_EMBED_ORIGINS = new Set(["app://-"]);
 const TRUSTED_ORIGINS_ENV = "CODEX_TASKBOARD_TRUSTED_ORIGINS";
 const CODEX_AGENT_ACTOR = {
   type: "agent",
-  id: "codex-agent",
+  id: "antigravity-agent",
   name: "Antigravity Agent",
   avatarUrl: null,
 };
@@ -562,15 +562,15 @@ function actorFromRequest(request) {
 
 function parseAssigneeTarget(value) {
   if (value === undefined) return undefined;
-  if (value !== "current-user" && value !== "codex-agent") {
-    throw new ApiError(400, "INVALID_FIELD", "'assigneeTarget' must be current-user or codex-agent");
+  if (value !== "current-user" && value !== "antigravity-agent" && value !== "codex-agent") {
+    throw new ApiError(400, "INVALID_FIELD", "'assigneeTarget' must be current-user or antigravity-agent");
   }
   return value;
 }
 
 function resolveAssignee(target, actor) {
   if (target === undefined) return actor;
-  if (target === "codex-agent") return CODEX_AGENT_ACTOR;
+  if (target === "antigravity-agent" || target === "codex-agent") return CODEX_AGENT_ACTOR;
   if (actor.type !== "user") {
     throw new ApiError(400, "INVALID_FIELD", "'current-user' requires a user request identity");
   }

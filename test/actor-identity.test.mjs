@@ -29,7 +29,7 @@ test("issue activity renders distinct avatars, IDs, and styles for users and age
   assert.match(avatarSource, /actor-avatar-\$\{actor\.type\}/);
   assert.match(avatarSource, /actor\.type === "agent"/);
   assert.match(avatarSource, /className="actor-avatar-image actor-avatar-agent-image"/);
-  assert.match(avatarSource, /src="codex-agent-logo\.png"/);
+  assert.match(avatarSource, /src="(?:codex|antigravity)-agent-logo\.png"/);
   assert.match(avatarSource, /actor\.avatarUrl/);
   assert.match(detailSource, /currentTask\.creatorType/);
   assert.match(detailSource, /currentTask\.creatorId/);
@@ -53,7 +53,7 @@ test("issue activity renders distinct avatars, IDs, and styles for users and age
 });
 
 test("agent avatar asset is a transparent PNG logo", async () => {
-  const logo = await readFile(new URL("../web/public/codex-agent-logo.png", import.meta.url));
+  const logo = await readFile(new URL("../web/public/antigravity-agent-logo.png", import.meta.url));
   assert.deepEqual([...logo.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
   assert.equal(logo[25], 6);
 });

@@ -740,8 +740,11 @@ export class TaskboardDatabase {
     `);
     this.database.exec(`
       UPDATE tasks
-      SET creator_type = 'agent', creator_id = 'codex-agent', creator_name = 'Antigravity Agent'
-      WHERE thread_id IS NOT NULL AND version = 1 AND creator_id = 'local-user'
+      SET creator_type = 'agent', creator_id = 'antigravity-agent', creator_name = 'Antigravity Agent'
+      WHERE creator_id = 'codex-agent' OR (thread_id IS NOT NULL AND version = 1 AND creator_id = 'local-user');
+      UPDATE tasks
+      SET assignee_type = 'agent', assignee_id = 'antigravity-agent', assignee_name = 'Antigravity Agent'
+      WHERE assignee_id = 'codex-agent';
     `);
     const identityTaskColumns = this.database.prepare("PRAGMA table_info(tasks)").all();
     const assigneeMigrations = [
@@ -889,8 +892,8 @@ export class TaskboardDatabase {
     }
     this.database.exec(`
       UPDATE comments
-      SET author_type = 'agent', author_id = 'codex-agent', author_name = 'Antigravity Agent'
-      WHERE thread_id IS NOT NULL AND author_id = 'local'
+      SET author_type = 'agent', author_id = 'antigravity-agent', author_name = 'Antigravity Agent'
+      WHERE author_id = 'codex-agent' OR (thread_id IS NOT NULL AND author_id = 'local')
     `);
     this.database.exec(`
       UPDATE comments
