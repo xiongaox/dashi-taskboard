@@ -537,9 +537,12 @@
 
   function readCodexProjects(metadata = codexProjectMetadata) {
     const seen = new Set();
-    return Array.from(document.querySelectorAll("[data-app-action-sidebar-project-row]"))
+    return Array.from(document.querySelectorAll("[data-app-action-sidebar-project-row], [data-app-action-sidebar-project-id], [data-app-action-sidebar-project-list-id]"))
       .flatMap((row) => {
-        const id = row.getAttribute("data-app-action-sidebar-project-id")?.trim();
+        const id = (
+          row.getAttribute("data-app-action-sidebar-project-id")
+          || row.getAttribute("data-app-action-sidebar-project-list-id")
+        )?.trim();
         const name = (
           row.getAttribute("data-app-action-sidebar-project-label")
           || row.getAttribute("aria-label")
@@ -751,8 +754,8 @@
     const activeThreadId = normalizeThreadId(row?.getAttribute("data-app-action-sidebar-thread-id"));
     const projectList = row?.closest?.("[data-app-action-sidebar-project-list-id]");
     const projectRow = row?.closest?.("[data-app-action-sidebar-project-id]")
-      || document.querySelector('[data-app-action-sidebar-project-row][aria-current="page"]')
-      || document.querySelector('[data-app-action-sidebar-project-row][data-app-action-sidebar-project-active="true"]');
+      || document.querySelector('[data-app-action-sidebar-project-row][aria-current="page"], [data-app-action-sidebar-project-id][aria-current="page"], [data-app-action-sidebar-project-list-id][aria-current="page"]')
+      || document.querySelector('[data-app-action-sidebar-project-row][data-app-action-sidebar-project-active="true"], [data-app-action-sidebar-project-id][data-app-action-sidebar-project-active="true"], [data-app-action-sidebar-project-list-id][data-app-action-sidebar-project-active="true"]');
     const projectId = projectList?.getAttribute("data-app-action-sidebar-project-list-id")
       || projectRow?.getAttribute("data-app-action-sidebar-project-id")
       || preferredProjectId
@@ -851,8 +854,11 @@
 
   function projectRowById(projectId) {
     if (typeof projectId !== "string" || !projectId.trim()) return null;
-    return Array.from(document.querySelectorAll("[data-app-action-sidebar-project-row]"))
-      .find((row) => row.getAttribute("data-app-action-sidebar-project-id") === projectId.trim()) || null;
+    return Array.from(document.querySelectorAll("[data-app-action-sidebar-project-row], [data-app-action-sidebar-project-id], [data-app-action-sidebar-project-list-id]"))
+      .find((row) => (
+        row.getAttribute("data-app-action-sidebar-project-id") === projectId.trim()
+        || row.getAttribute("data-app-action-sidebar-project-list-id") === projectId.trim()
+      )) || null;
   }
 
   async function waitForRemoteProject(projectId, hostId, workspacePath) {
@@ -1727,7 +1733,8 @@
     return Boolean(clickable.closest(
       "[data-app-action-sidebar-thread-id],"
       + "[data-app-action-sidebar-project-row],"
-      + "[data-app-action-sidebar-project-id]",
+      + "[data-app-action-sidebar-project-id],"
+      + "[data-app-action-sidebar-project-list-id]",
     ));
   }
 
